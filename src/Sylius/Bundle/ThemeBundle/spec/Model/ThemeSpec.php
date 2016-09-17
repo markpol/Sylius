@@ -13,16 +13,22 @@ namespace spec\Sylius\Bundle\ThemeBundle\Model;
 
 use PhpSpec\ObjectBehavior;
 use Sylius\Bundle\ThemeBundle\Model\Theme;
+use Sylius\Bundle\ThemeBundle\Model\ThemeAuthor;
 use Sylius\Bundle\ThemeBundle\Model\ThemeInterface;
-use Sylius\Component\Resource\Model\ResourceInterface;
+use Sylius\Bundle\ThemeBundle\Model\ThemeScreenshot;
 
 /**
  * @mixin Theme
  *
  * @author Kamil Kokot <kamil.kokot@lakion.com>
  */
-class ThemeSpec extends ObjectBehavior
+final class ThemeSpec extends ObjectBehavior
 {
+    function let()
+    {
+        $this->beConstructedWith('theme/name', '/theme/path');
+    }
+
     function it_is_initializable()
     {
         $this->shouldHaveType('Sylius\Bundle\ThemeBundle\Model\Theme');
@@ -33,41 +39,21 @@ class ThemeSpec extends ObjectBehavior
         $this->shouldImplement(ThemeInterface::class);
     }
 
-    function it_implements_resource_interface()
+    function its_name_cannot_have_underscores()
     {
-        $this->shouldImplement(ResourceInterface::class);
+        $this->beConstructedWith('first_theme/name', '/theme/path');
+
+        $this->shouldThrow(\InvalidArgumentException::class)->duringInstantiation();
     }
 
-    function its_id_is_name()
+    function it_has_immutable_name()
     {
-        $this->getId()->shouldReturn(null);
-
-        $this->setName('name');
-        $this->getId()->shouldReturn('name');
+        $this->getName()->shouldReturn('theme/name');
     }
 
-    function it_has_name()
+    function it_has_immutable_path()
     {
-        $this->getName()->shouldReturn(null);
-
-        $this->setName('foo/bar');
-        $this->getName()->shouldReturn('foo/bar');
-    }
-
-    function it_has_path()
-    {
-        $this->getPath()->shouldReturn(null);
-
-        $this->setPath('/foo/bar');
-        $this->getPath()->shouldReturn('/foo/bar');
-    }
-
-    function it_has_authors()
-    {
-        $this->getAuthors()->shouldReturn([]);
-
-        $this->setAuthors([['name' => 'Richard Rinkowsky']]);
-        $this->getAuthors()->shouldReturn([['name' => 'Richard Rinkowsky']]);
+        $this->getPath()->shouldReturn('/theme/path');
     }
 
     function it_has_title()
@@ -86,18 +72,40 @@ class ThemeSpec extends ObjectBehavior
         $this->getDescription()->shouldReturn('Lorem ipsum.');
     }
 
-    function it_has_parents_names()
+    function it_has_authors()
     {
-        $this->getParentsNames()->shouldReturn([]);
+        $themeAuthor = new ThemeAuthor();
 
-        $this->setParentsNames(['example/sylius-theme']);
-        $this->getParentsNames()->shouldReturn(['example/sylius-theme']);
+        $this->getAuthors()->shouldHaveCount(0);
+
+        $this->addAuthor($themeAuthor);
+        $this->getAuthors()->shouldHaveCount(1);
+
+        $this->removeAuthor($themeAuthor);
+        $this->getAuthors()->shouldHaveCount(0);
     }
 
-    function it_has_code_based_on_md5ed_name()
+    function it_has_parents(ThemeInterface $theme)
     {
-        $this->setName('name');
+        $this->getParents()->shouldHaveCount(0);
 
-        $this->getCode()->shouldReturn(substr(md5('name'), 0, 8));
+        $this->addParent($theme);
+        $this->getParents()->shouldHaveCount(1);
+
+        $this->removeParent($theme);
+        $this->getParents()->shouldHaveCount(0);
+    }
+
+    function it_has_screenshots()
+    {
+        $themeScreenshot = new ThemeScreenshot('some path');
+
+        $this->getScreenshots()->shouldHaveCount(0);
+
+        $this->addScreenshot($themeScreenshot);
+        $this->getScreenshots()->shouldHaveCount(1);
+
+        $this->removeScreenshot($themeScreenshot);
+        $this->getScreenshots()->shouldHaveCount(0);
     }
 }

@@ -11,37 +11,68 @@
 
 namespace Sylius\Component\Core\Promotion\Action;
 
+use Sylius\Component\Core\Distributor\ProportionalIntegerDistributorInterface;
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\OrderItemInterface;
+use Sylius\Component\Core\Promotion\Applicator\UnitsPromotionAdjustmentsApplicatorInterface;
 use Sylius\Component\Promotion\Model\PromotionInterface;
 use Sylius\Component\Promotion\Model\PromotionSubjectInterface;
-use Sylius\Component\Resource\Exception\UnexpectedTypeException;
 
 /**
- * Percentage discount action.
- *
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  * @author Saša Stamenković <umpirsky@gmail.com>
+ * @author Mateusz Zalewski <mateusz.zalewski@lakion.com>
  */
 class PercentageDiscountAction extends DiscountAction
 {
+    const TYPE = 'order_percentage_discount';
+
+    /**
+     * @var ProportionalIntegerDistributorInterface
+     */
+    private $distributor;
+
+    /**
+     * @var UnitsPromotionAdjustmentsApplicatorInterface
+     */
+    private $unitsPromotionAdjustmentsApplicator;
+
+    /**
+     * @param ProportionalIntegerDistributorInterface $distributor
+     * @param UnitsPromotionAdjustmentsApplicatorInterface $unitsPromotionAdjustmentsApplicator
+     */
+    public function __construct(
+        ProportionalIntegerDistributorInterface $distributor,
+        UnitsPromotionAdjustmentsApplicatorInterface $unitsPromotionAdjustmentsApplicator
+    ) {
+        $this->distributor = $distributor;
+        $this->unitsPromotionAdjustmentsApplicator = $unitsPromotionAdjustmentsApplicator;
+    }
+
     /**
      * {@inheritdoc}
      */
     public function execute(PromotionSubjectInterface $subject, array $configuration, PromotionInterface $promotion)
     {
-        if (!$subject instanceof OrderInterface && !$subject instanceof OrderItemInterface) {
-            throw new UnexpectedTypeException(
-                $subject,
-                'Sylius\Component\Core\Model\OrderInterface or Sylius\Component\Core\Model\OrderItemInterface'
-            );
+        /** @var OrderInterface $subject */
+        if (!$this->isSubjectValid($subject)) {
+            return;
         }
 
-        $adjustment = $this->createAdjustment($promotion);
-        $adjustmentAmount = (int) round($subject->getPromotionSubjectTotal() * $configuration['percentage']);
-        $adjustment->setAmount(-$adjustmentAmount);
+        $this->isConfigurationValid($configuration);
 
-        $subject->addAdjustment($adjustment);
+        $promotionAmount = $this->calculateAdjustmentAmount($subject->getPromotionSubjectTotal(), $configuration['percentage']);
+        if (0 === $promotionAmount) {
+            return;
+        }
+
+        $itemsTotal = [];
+        foreach ($subject->getItems() as $orderItem) {
+            $itemsTotal[] = $orderItem->getTotal();
+        }
+
+        $splitPromotion = $this->distributor->distribute($itemsTotal, $promotionAmount);
+        $this->unitsPromotionAdjustmentsApplicator->apply($subject, $promotion, $splitPromotion);
     }
 
     /**
@@ -50,5 +81,26 @@ class PercentageDiscountAction extends DiscountAction
     public function getConfigurationFormType()
     {
         return 'sylius_promotion_action_percentage_discount_configuration';
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function isConfigurationValid(array $configuration)
+    {
+        if (!isset($configuration['percentage']) || !is_float($configuration['percentage'])) {
+            throw new \InvalidArgumentException('"percentage" must be set and must be a float.');
+        }
+    }
+
+    /**
+     * @param int $promotionSubjectTotal
+     * @param int $percentage
+     *
+     * @return int
+     */
+    private function calculateAdjustmentAmount($promotionSubjectTotal, $percentage)
+    {
+        return -1 * (int) round($promotionSubjectTotal * $percentage);
     }
 }

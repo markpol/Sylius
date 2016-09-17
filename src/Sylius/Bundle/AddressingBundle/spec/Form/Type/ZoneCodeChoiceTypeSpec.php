@@ -17,7 +17,7 @@ use Sylius\Component\Resource\Repository\RepositoryInterface;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-class ZoneCodeChoiceTypeSpec extends ObjectBehavior
+final class ZoneCodeChoiceTypeSpec extends ObjectBehavior
 {
     function let(RepositoryInterface $repository)
     {
@@ -48,6 +48,7 @@ class ZoneCodeChoiceTypeSpec extends ObjectBehavior
 
         $resolver
             ->setDefaults([
+                'choice_translation_domain' => false,
                 'choices' => ['EU' => 'European Union'],
                 'label' => 'sylius.form.zone.types.zone',
                 'empty_value' => 'sylius.form.zone.select',

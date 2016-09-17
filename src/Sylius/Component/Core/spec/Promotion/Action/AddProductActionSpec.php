@@ -12,7 +12,7 @@
 namespace spec\Sylius\Component\Core\Promotion\Action;
 
 use PhpSpec\ObjectBehavior;
-use Sylius\Bundle\OrderBundle\Modifier\OrderItemQuantityModifierInterface;
+use Sylius\Component\Order\Modifier\OrderItemQuantityModifierInterface;
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\OrderItemInterface;
 use Sylius\Component\Core\Model\ProductVariantInterface;
@@ -25,7 +25,7 @@ use Sylius\Component\Resource\Repository\RepositoryInterface;
  * @author Alexandre Bacco <alexandre.bacco@gmail.com>
  * @author Mateusz Zalewski <mateusz.zalewski@lakion.com>
  */
-class AddProductActionSpec extends ObjectBehavior
+final class AddProductActionSpec extends ObjectBehavior
 {
     function let(FactoryInterface $itemFactory, RepositoryInterface $variantRepository, OrderItemQuantityModifierInterface $orderItemQuantityModifier)
     {

@@ -14,35 +14,79 @@ namespace Sylius\Bundle\CoreBundle\EventListener;
 use Sylius\Component\Core\Model\ProductInterface;
 use Sylius\Component\Core\Model\ProductVariantInterface;
 use Sylius\Component\Core\Uploader\ImageUploaderInterface;
-use Sylius\Component\Resource\Exception\UnexpectedTypeException;
-use Sylius\Component\Taxonomy\Model\TaxonInterface;
-use Sylius\Component\Taxonomy\Model\TaxonomyInterface;
+use Sylius\Component\Variation\Resolver\VariantResolverInterface;
+use Sylius\Component\Core\Model\TaxonInterface;
 use Symfony\Component\EventDispatcher\GenericEvent;
+use Webmozart\Assert\Assert;
 
 class ImageUploadListener
 {
+    /**
+     * @var ImageUploaderInterface
+     */
     protected $uploader;
 
-    public function __construct(ImageUploaderInterface $uploader)
+    /**
+     * @var VariantResolverInterface
+     */
+    protected $variantResolver;
+
+    /**
+     * @param ImageUploaderInterface $uploader
+     * @param VariantResolverInterface $variantResolver
+     */
+    public function __construct(ImageUploaderInterface $uploader, VariantResolverInterface $variantResolver)
     {
         $this->uploader = $uploader;
+        $this->variantResolver = $variantResolver;
     }
 
+    /**
+     * @param GenericEvent $event
+     */
+    public function uploadProductVariantImage(GenericEvent $event)
+    {
+        $subject = $event->getSubject();
+        Assert::isInstanceOf($subject, ProductVariantInterface::class);
+
+        $this->uploadProductVariantImages($subject);
+    }
+
+    /**
+     * @param GenericEvent $event
+     */
     public function uploadProductImage(GenericEvent $event)
     {
         $subject = $event->getSubject();
-        if (!$subject instanceof ProductInterface && !$subject instanceof ProductVariantInterface) {
-            throw new UnexpectedTypeException(
-                $subject,
-                'Sylius\Component\Core\Model\ProductInterface or Sylius\Component\Core\Model\ProductVariantInterface'
-            );
+        Assert::isInstanceOf($subject, ProductInterface::class);
+
+        if ($subject->isSimple()) {
+            $variant = $this->variantResolver->getVariant($subject);
+            $this->uploadProductVariantImages($variant);
         }
+    }
 
-        $variant = $subject instanceof ProductVariantInterface ? $subject : $subject->getMasterVariant();
+    /**
+     * @param GenericEvent $event
+     */
+    public function uploadTaxonImage(GenericEvent $event)
+    {
+        $subject = $event->getSubject();
+        Assert::isInstanceOf($subject, TaxonInterface::class);
 
-        $images = $variant->getImages();
+        $this->uploadTaxonImages($subject);
+    }
+
+    /**
+     * @param TaxonInterface $taxon
+     */
+    private function uploadTaxonImages(TaxonInterface $taxon)
+    {
+        $images = $taxon->getImages();
         foreach ($images as $image) {
-            $this->uploader->upload($image);
+            if ($image->hasFile()) {
+                $this->uploader->upload($image);
+            }
 
             // Upload failed? Let's remove that image.
             if (null === $image->getPath()) {
@@ -51,35 +95,21 @@ class ImageUploadListener
         }
     }
 
-    public function uploadTaxonImage(GenericEvent $event)
+    /**
+     * @param ProductVariantInterface $productVariant
+     */
+    private function uploadProductVariantImages(ProductVariantInterface $productVariant)
     {
-        $subject = $event->getSubject();
+        $images = $productVariant->getImages();
+        foreach ($images as $image) {
+            if ($image->hasFile()) {
+                $this->uploader->upload($image);
+            }
 
-        if (!$subject instanceof TaxonInterface) {
-            throw new UnexpectedTypeException(
-                $subject,
-                TaxonInterface::class
-            );
-        }
-
-        if ($subject->hasFile()) {
-            $this->uploader->upload($subject);
-        }
-    }
-
-    public function uploadTaxonomyImage(GenericEvent $event)
-    {
-        $subject = $event->getSubject();
-
-        if (!$subject instanceof TaxonomyInterface) {
-            throw new UnexpectedTypeException(
-                $subject,
-                'Sylius\Component\Taxonomy\Model\TaxonomyInterface'
-            );
-        }
-
-        if ($subject->getRoot()->hasFile()) {
-            $this->uploader->upload($subject->getRoot());
+            // Upload failed? Let's remove that image.
+            if (null === $image->getPath()) {
+                $images->removeElement($image);
+            }
         }
     }
 }

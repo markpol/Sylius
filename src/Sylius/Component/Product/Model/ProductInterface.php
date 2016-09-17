@@ -11,25 +11,29 @@
 
 namespace Sylius\Component\Product\Model;
 
-use Sylius\Component\Archetype\Model\ArchetypeSubjectInterface;
 use Sylius\Component\Association\Model\AssociableInterface;
+use Sylius\Component\Attribute\Model\AttributeSubjectInterface;
+use Sylius\Component\Resource\Model\CodeAwareInterface;
 use Sylius\Component\Resource\Model\SlugAwareInterface;
-use Sylius\Component\Resource\Model\SoftDeletableInterface;
 use Sylius\Component\Resource\Model\TimestampableInterface;
 use Sylius\Component\Resource\Model\ToggleableInterface;
+use Sylius\Component\Resource\Model\TranslatableInterface;
+use Sylius\Component\Variation\Model\VariableInterface;
 
 /**
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  * @author Gonzalo Vilaseca <gvilaseca@reiss.co.uk>
  */
 interface ProductInterface extends
-    ArchetypeSubjectInterface,
+    AttributeSubjectInterface,
     SlugAwareInterface,
-    SoftDeletableInterface,
     TimestampableInterface,
     ToggleableInterface,
     ProductTranslationInterface,
-    AssociableInterface
+    AssociableInterface,
+    CodeAwareInterface,
+    TranslatableInterface,
+    VariableInterface
 {
     /**
      * @return bool
@@ -62,7 +66,7 @@ interface ProductInterface extends
     public function addAssociation(ProductAssociationInterface $association);
 
     /**
-     * @param ProductAssociationInterface[] $association
+     * @return ProductAssociationInterface[]
      */
     public function getAssociations();
 
@@ -70,4 +74,9 @@ interface ProductInterface extends
      * @param ProductAssociationInterface $association
      */
     public function removeAssociation(ProductAssociationInterface $association);
+    
+    /**
+     * @return bool
+     */
+    public function isSimple();
 }

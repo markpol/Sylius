@@ -11,61 +11,47 @@
 
 namespace Sylius\Bundle\MoneyBundle\Templating\Helper;
 
+use Sylius\Bundle\MoneyBundle\Formatter\MoneyFormatterInterface;
 use Symfony\Component\Templating\Helper\Helper;
 
-class MoneyHelper extends Helper
+class MoneyHelper extends Helper implements MoneyHelperInterface
 {
     /**
-     * The default currency.
-     *
-     * @var string
+     * @var MoneyFormatterInterface
      */
-    private $currency;
+    private $moneyFormatter;
 
     /**
      * @var string
      */
-    private $locale;
+    private $defaultCurrencyCode;
 
     /**
-     * @param string $locale   The locale used to format money.
-     * @param string $currency The default currency.
+     * @var string
      */
-    public function __construct($locale, $currency = null)
+    private $defaultLocale;
+
+    /**
+     * @param MoneyFormatterInterface $moneyFormatter
+     * @param string $defaultCurrencyCode
+     * @param string $defaultLocale
+     */
+    public function __construct(MoneyFormatterInterface $moneyFormatter, $defaultCurrencyCode, $defaultLocale)
     {
-        $this->locale = $locale ?: \Locale::getDefault();
-        $this->currency = $currency;
+        $this->moneyFormatter = $moneyFormatter;
+        $this->defaultCurrencyCode = $defaultCurrencyCode;
+        $this->defaultLocale = $defaultLocale;
     }
 
     /**
-     * Format the money amount to nice display form.
-     *
-     * @param int         $amount
-     * @param string|null $currency
-     * @param bool        $decimal
-     * @param string|null $locale
-     *
-     * @return string
-     *
-     * @throws \InvalidArgumentException
+     * {@inheritdoc}
      */
-    public function formatAmount($amount, $currency = null, $decimal = false, $locale = null)
+    public function formatAmount($amount, $currencyCode = null, $locale = null)
     {
-        $locale = $locale   ?: $this->getDefaultLocale();
-        $currency = $currency ?: $this->getDefaultCurrency();
+        $locale = $locale ?: $this->defaultLocale;
+        $currencyCode = $currencyCode ?: $this->defaultCurrencyCode;
 
-        if ($decimal) {
-            $formatter = new \NumberFormatter($locale, \NumberFormatter::DECIMAL);
-        } else {
-            $formatter = new \NumberFormatter($locale, \NumberFormatter::CURRENCY);
-        }
-
-        $result = $formatter->formatCurrency($amount / 100, $currency);
-        if (false === $result) {
-            throw new \InvalidArgumentException(sprintf('The amount "%s" of type %s cannot be formatted to currency "%s".', $amount, gettype($amount), $currency));
-        }
-
-        return $result;
+        return $this->moneyFormatter->format($amount, $currencyCode, $locale);
     }
 
     /**
@@ -74,25 +60,5 @@ class MoneyHelper extends Helper
     public function getName()
     {
         return 'sylius_money';
-    }
-
-    /**
-     * Get the default currency if none is provided as argument.
-     *
-     * @return string The currency code
-     */
-    protected function getDefaultCurrency()
-    {
-        return $this->currency;
-    }
-
-    /**
-     * Get the default locale if none is provided as argument.
-     *
-     * @return string The locale code
-     */
-    protected function getDefaultLocale()
-    {
-        return $this->locale;
     }
 }

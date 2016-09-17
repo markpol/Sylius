@@ -17,14 +17,14 @@ use Sylius\Bundle\ResourceBundle\SyliusResourceBundle;
 /**
  * Sylius content bundle.
  *
- * @author Paweł Jędrzejewski <pjedrzejewski@diweb.pl>
+ * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
 class SyliusContentBundle extends AbstractResourceBundle
 {
     /**
      * {@inheritdoc}
      */
-    public static function getSupportedDrivers()
+    public function getSupportedDrivers()
     {
         return [
             SyliusResourceBundle::DRIVER_DOCTRINE_PHPCR_ODM,

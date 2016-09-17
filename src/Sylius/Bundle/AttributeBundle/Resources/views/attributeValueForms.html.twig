@@ -1,4 +1,5 @@
-{% set subject = metadata.name|replace({'_attribute': ''}) %}
+{# Because of introducing LegacyProductType _legacy suffix has to be added to subject name. It should be changed as soon as a better idea of fixing this would appear #}
+{% set subject = metadata.name|replace({'_attribute': '_legacy'}) %}
 {% for attributeId, form in forms %}
     <div data-form-collection="item"
          data-form-collection-index="{{ count }}"
@@ -8,7 +9,7 @@
             <p class="text-right">
                 <a href="#" data-form-collection="delete" class="btn btn-danger">
                     <i class="glyphicon glyphicon-remove collection-button-remove"></i>
-                    {{ 'sylius.delete'|trans }}
+                    {{ 'sylius.ui.delete'|trans }}
                 </a>
             </p>
 

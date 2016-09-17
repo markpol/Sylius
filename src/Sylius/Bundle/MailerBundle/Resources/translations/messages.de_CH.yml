@@ -2,6 +2,7 @@
 # (c) Paweł Jędrzejewski
 
 sylius:
-  form:
-    email:
-      enabled: Aktiviert
+    form:
+        email:
+            enabled: Aktiviert
+            content: Inhalt

@@ -17,16 +17,58 @@ use Sylius\Bundle\ThemeBundle\DependencyInjection\SyliusThemeExtension;
 /**
  * @author Kamil Kokot <kamil.kokot@lakion.com>
  */
-class SyliusThemeExtensionTest extends AbstractExtensionTestCase
+final class SyliusThemeExtensionTest extends AbstractExtensionTestCase
 {
     /**
      * @test
      */
-    public function it_sets_configured_theme_locations_as_parameter()
+    public function it_aliases_configured_theme_context_service()
     {
-        $this->load(['sources' => ['filesystem' => ['locations' => ['/my/path']]]]);
+        $this->load(['context' => 'sylius.theme.context.custom']);
 
-        $this->assertContainerBuilderHasParameter('sylius.theme.configuration.filesystem.locations', ['/my/path']);
+        $this->assertContainerBuilderHasAlias('sylius.context.theme', 'sylius.theme.context.custom');
+    }
+
+    /**
+     * @test
+     */
+    public function it_loads_all_the_supported_features_by_default()
+    {
+        $this->load([]);
+
+        $this->assertContainerBuilderHasService('sylius.theme.asset.assets_installer');
+        $this->assertContainerBuilderHasService('sylius.theme.templating.locator');
+        $this->assertContainerBuilderHasService('sylius.theme.translation.translator');
+    }
+
+    /**
+     * @test
+     */
+    public function it_does_not_load_assets_support_if_its_disabled()
+    {
+        $this->load(['assets' => ['enabled' => false]]);
+
+        $this->assertContainerBuilderNotHasService('sylius.theme.asset.assets_installer');
+    }
+
+    /**
+     * @test
+     */
+    public function it_does_not_load_templating_support_if_its_disabled()
+    {
+        $this->load(['templating' => ['enabled' => false]]);
+
+        $this->assertContainerBuilderNotHasService('sylius.theme.templating.locator');
+    }
+
+    /**
+     * @test
+     */
+    public function it_does_not_load_translations_support_if_its_disabled()
+    {
+        $this->load(['translations' => ['enabled' => false]]);
+
+        $this->assertContainerBuilderNotHasService('sylius.theme.translation.translator');
     }
 
     /**

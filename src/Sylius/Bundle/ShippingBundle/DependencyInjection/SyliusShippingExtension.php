@@ -18,8 +18,6 @@ use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 use Symfony\Component\DependencyInjection\Reference;
 
 /**
- * Shipping extension.
- *
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
 class SyliusShippingExtension extends AbstractResourceExtension
@@ -29,8 +27,10 @@ class SyliusShippingExtension extends AbstractResourceExtension
      */
     public function load(array $config, ContainerBuilder $container)
     {
-        $config = $this->processConfiguration(new Configuration(), $config);
+        $config = $this->processConfiguration($this->getConfiguration($config, $container), $config);
         $loader = new XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
+
+        $loader->load(sprintf('driver/%s.xml', $config['driver']));
 
         $this->registerResources('sylius', $config['driver'], $config['resources'], $container);
         $this->mapFormValidationGroupsParameters($config, $container);
@@ -47,8 +47,5 @@ class SyliusShippingExtension extends AbstractResourceExtension
         $shippingMethod->addArgument(new Reference('sylius.registry.shipping_calculator'));
         $shippingMethod->addArgument(new Reference('sylius.registry.shipping_rule_checker'));
         $shippingMethod->addArgument(new Reference('form.registry'));
-
-        $shippingMethod = $container->getDefinition('sylius.form.type.shipping_method_rule');
-        $shippingMethod->addArgument(new Reference('sylius.registry.shipping_rule_checker'));
     }
 }

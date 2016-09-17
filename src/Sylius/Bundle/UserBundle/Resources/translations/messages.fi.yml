@@ -2,8 +2,7 @@
 # (c) Paweł Jędrzejewski
 
 sylius:
-  form:
-    user:
-      email: Sähköpostiosoite
-    customer:
-      email: Sähköpostiosoite
+    form:
+        user:
+            email: Sähköpostiosoite
+            username: Käyttäjänimi

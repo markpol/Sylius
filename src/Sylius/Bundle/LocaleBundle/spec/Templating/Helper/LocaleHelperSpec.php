@@ -12,22 +12,27 @@
 namespace spec\Sylius\Bundle\LocaleBundle\Templating\Helper;
 
 use PhpSpec\ObjectBehavior;
+use Sylius\Bundle\LocaleBundle\Templating\Helper\LocaleHelper;
+use Sylius\Bundle\LocaleBundle\Templating\Helper\LocaleHelperInterface;
 use Sylius\Component\Locale\Context\LocaleContextInterface;
+use Sylius\Component\Locale\Converter\LocaleConverterInterface;
 use Symfony\Component\Templating\Helper\Helper;
 
 /**
+ * @mixin LocaleHelper
+ *
  * @author Arnaud Langlade <arn0d.dev@gmail.com>
  */
-class LocaleHelperSpec extends ObjectBehavior
+final class LocaleHelperSpec extends ObjectBehavior
 {
-    function let(LocaleContextInterface $localeContext)
+    function let(LocaleConverterInterface $localeConverter)
     {
-        $this->beConstructedWith($localeContext);
+        $this->beConstructedWith($localeConverter);
     }
 
     function it_is_initializable()
     {
-        $this->shouldHaveType('Sylius\Bundle\LocaleBundle\Templating\Helper\LocaleHelper');
+        $this->shouldHaveType(LocaleHelper::class);
     }
 
     function it_is_a_helper()
@@ -35,11 +40,16 @@ class LocaleHelperSpec extends ObjectBehavior
         $this->shouldHaveType(Helper::class);
     }
 
-    function it_has_locale($localeContext)
+    function it_is_a_locale_helper()
     {
-        $localeContext->getCurrentLocale()->shouldBeCalled()->willReturn('fr_FR');
+        $this->shouldImplement(LocaleHelperInterface::class);
+    }
 
-        $this->getCurrentLocale()->shouldReturn('fr_FR');
+    function it_converts_locales_code_to_name(LocaleConverterInterface $localeConverter)
+    {
+        $localeConverter->convertCodeToName('fr_FR')->willReturn('French (France)');
+
+        $this->convertCodeToName('fr_FR')->shouldReturn('French (France)');
     }
 
     function it_has_name()

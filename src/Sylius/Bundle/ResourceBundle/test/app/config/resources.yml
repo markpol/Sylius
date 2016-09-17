@@ -1,8 +1,17 @@
 sylius_resource:
+    translation:
+        locale_provider: "test.locale_provider"
+        locale_context: "test.locale_context"
     resources:
         app.book:
             classes:
                 model: AppBundle\Entity\Book
+                factory: Sylius\Component\Resource\Factory\TranslatableFactory
                 form:
                     default: AppBundle\Form\Type\BookType
                     choice: Sylius\Bundle\ResourceBundle\Form\Type\ResourceChoiceType
+            translation:
+                classes:
+                    model: AppBundle\Entity\BookTranslation
+                    form:
+                        default: AppBundle\Form\Type\BookTranslationType

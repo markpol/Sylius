@@ -12,81 +12,118 @@
 namespace Sylius\Bundle\ThemeBundle\Tests\DependencyInjection;
 
 use Matthias\SymfonyConfigTest\PhpUnit\ConfigurationTestCaseTrait;
+use Sylius\Bundle\ThemeBundle\Configuration\Filesystem\FilesystemConfigurationSourceFactory;
 use Sylius\Bundle\ThemeBundle\DependencyInjection\Configuration;
 
 /**
  * @author Kamil Kokot <kamil.kokot@lakion.com>
  */
-class ConfigurationTest extends \PHPUnit_Framework_TestCase
+final class ConfigurationTest extends \PHPUnit_Framework_TestCase
 {
     use ConfigurationTestCaseTrait;
 
     /**
      * @test
      */
-    public function it_uses_app_themes_filesystem_as_the_default_source()
-    {
-        $this->assertProcessedConfigurationEquals(
-           [
-               [],
-           ],
-           ['sources' => ['filesystem' => ['locations' => ['%kernel.root_dir%/themes', '%kernel.root_dir%/../vendor/sylius/themes']]]]
-       );
-    }
-
-    /**
-     * @test
-     */
-    public function it_does_not_add_default_theme_location_if_there_are_some_defined_by_user()
+    public function it_has_default_context_service_set()
     {
         $this->assertProcessedConfigurationEquals(
             [
-                ['sources' => ['filesystem' => ['locations' => ['/custom/path', '/custom/path2']]]],
+                [],
             ],
-            ['sources' => ['filesystem' => ['locations' => ['/custom/path', '/custom/path2']]]],
-            'sources.filesystem'
+            ['context' => 'sylius.theme.context.settable'],
+            'context'
         );
     }
 
     /**
      * @test
      */
-    public function it_uses_the_last_theme_locations_passed_and_rejects_the_other_ones()
-    {
-        $this->assertProcessedConfigurationEquals(
-            [
-                ['sources' => ['filesystem' => ['locations' => ['/custom/path', '/custom/path2']]]],
-                ['sources' => ['filesystem' => ['locations' => ['/last/custom/path']]]],
-            ],
-            ['sources' => ['filesystem' => ['locations' => ['/last/custom/path']]]],
-            'sources.filesystem'
-        );
-    }
-
-    /**
-     * @test
-     */
-    public function it_is_invalid_to_pass_a_string_as_theme_locations()
+    public function its_context_cannot_be_empty()
     {
         $this->assertPartialConfigurationIsInvalid(
             [
-                ['locations' => '/string/not/array'],
+                ['']
             ],
-            'sources.filesystem'
+            'context'
         );
     }
 
     /**
      * @test
      */
-    public function it_throws_an_error_if_trying_to_set_theme_locations_to_an_empty_array()
+    public function its_context_can_be_overridden()
     {
-        $this->assertPartialConfigurationIsInvalid(
+        $this->assertProcessedConfigurationEquals(
             [
-                ['locations' => []],
+                ['context' => 'sylius.theme.context.custom'],
             ],
-            'sources.filesystem'
+            ['context' => 'sylius.theme.context.custom'],
+            'context'
         );
+    }
+
+    /**
+     * @test
+     */
+    public function assets_support_is_enabled_by_default()
+    {
+        $this->assertProcessedConfigurationEquals([[]], ['assets' => ['enabled' => true]], 'assets');
+    }
+
+    /**
+     * @test
+     */
+    public function assets_support_may_be_toggled()
+    {
+        $this->assertProcessedConfigurationEquals([['assets' => ['enabled' => true]]], ['assets' => ['enabled' => true]], 'assets');
+        $this->assertProcessedConfigurationEquals([['assets' => []]], ['assets' => ['enabled' => true]], 'assets');
+        $this->assertProcessedConfigurationEquals([['assets' => null]], ['assets' => ['enabled' => true]], 'assets');
+
+        $this->assertProcessedConfigurationEquals([['assets' => ['enabled' => false]]], ['assets' => ['enabled' => false]], 'assets');
+        $this->assertProcessedConfigurationEquals([['assets' => false]], ['assets' => ['enabled' => false]], 'assets');
+    }
+
+    /**
+     * @test
+     */
+    public function templating_support_is_enabled_by_default()
+    {
+        $this->assertProcessedConfigurationEquals([[]], ['templating' => ['enabled' => true]], 'templating');
+    }
+
+    /**
+     * @test
+     */
+    public function templating_support_may_be_toggled()
+    {
+        $this->assertProcessedConfigurationEquals([['templating' => ['enabled' => true]]], ['templating' => ['enabled' => true]], 'templating');
+        $this->assertProcessedConfigurationEquals([['templating' => []]], ['templating' => ['enabled' => true]], 'templating');
+        $this->assertProcessedConfigurationEquals([['templating' => null]], ['templating' => ['enabled' => true]], 'templating');
+
+        $this->assertProcessedConfigurationEquals([['templating' => ['enabled' => false]]], ['templating' => ['enabled' => false]], 'templating');
+        $this->assertProcessedConfigurationEquals([['templating' => false]], ['templating' => ['enabled' => false]], 'templating');
+    }
+
+    /**
+     * @test
+     */
+    public function translations_support_is_enabled_by_default()
+    {
+        $this->assertProcessedConfigurationEquals([[]], ['translations' => ['enabled' => true]], 'translations');
+    }
+
+    /**
+     * @test
+     */
+    public function translations_support_may_be_toggled()
+    {
+        $this->assertProcessedConfigurationEquals([['translations' => ['enabled' => true]]], ['translations' => ['enabled' => true]], 'translations');
+        $this->assertProcessedConfigurationEquals([['translations' => []]], ['translations' => ['enabled' => true]], 'translations');
+        $this->assertProcessedConfigurationEquals([['translations' => null]], ['translations' => ['enabled' => true]], 'translations');
+
+        $this->assertProcessedConfigurationEquals([['translations' => ['enabled' => false]]], ['translations' => ['enabled' => false]], 'translations');
+        $this->assertProcessedConfigurationEquals([['translations' => false]], ['translations' => ['enabled' => false]], 'translations');
     }
 
     /**

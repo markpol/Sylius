@@ -11,21 +11,20 @@
 
 namespace Sylius\Bundle\ThemeBundle\Form\Type;
 
+use Sylius\Bundle\ThemeBundle\Model\ThemeInterface;
 use Sylius\Bundle\ThemeBundle\Repository\ThemeRepositoryInterface;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Extension\Core\ChoiceList\ObjectChoiceList;
-use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 /**
- * @author Majid Golshadi <golshadi.majid@gmail.com>
+ * @author Kamil Kokot <kamil.kokot@lakion.com>
  */
-class ThemeChoiceType extends AbstractType
+final class ThemeChoiceType extends AbstractType
 {
     /**
      * @var ThemeRepositoryInterface
      */
-    protected $themeRepository;
+    private $themeRepository;
 
     /**
      * @param ThemeRepositoryInterface $themeRepository
@@ -40,9 +39,18 @@ class ThemeChoiceType extends AbstractType
      */
     public function configureOptions(OptionsResolver $resolver)
     {
-        $themes = $this->themeRepository->findAll();
-
-        $resolver->setDefault('choice_list', new ObjectChoiceList($themes, 'title', [], null, 'name'));
+        // Normalizer instead of default as it should not be overwritten
+        $resolver
+            ->setNormalizer('choices', function () {
+                return $this->themeRepository->findAll();
+            })
+            ->setNormalizer('choices_as_values', function () {
+                return true;
+            })
+            ->setDefault('choice_label', function (ThemeInterface $theme) {
+                return (string) $theme;
+            })
+        ;
     }
 
     /**
@@ -50,7 +58,7 @@ class ThemeChoiceType extends AbstractType
      */
     public function getParent()
     {
-        return ChoiceType::class;
+        return 'choice';
     }
 
     /**
@@ -61,3 +69,4 @@ class ThemeChoiceType extends AbstractType
         return 'sylius_theme_choice';
     }
 }
+

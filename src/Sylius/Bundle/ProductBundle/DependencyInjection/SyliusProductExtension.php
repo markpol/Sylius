@@ -11,7 +11,6 @@
 
 namespace Sylius\Bundle\ProductBundle\DependencyInjection;
 
-use Sylius\Bundle\ProductBundle\Controller\VariantController;
 use Sylius\Bundle\ProductBundle\Form\Type\VariantType;
 use Sylius\Bundle\ResourceBundle\DependencyInjection\Extension\AbstractResourceExtension;
 use Sylius\Component\Product\Factory\ProductVariantFactory;
@@ -36,6 +35,7 @@ use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
+use Symfony\Component\DependencyInjection\Reference;
 
 /**
  * Product catalog extension.
@@ -49,8 +49,10 @@ class SyliusProductExtension extends AbstractResourceExtension implements Prepen
      */
     public function load(array $config, ContainerBuilder $container)
     {
-        $config = $this->processConfiguration(new Configuration(), $config);
+        $config = $this->processConfiguration($this->getConfiguration($config, $container), $config);
         $loader = new XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
+
+        $loader->load(sprintf('driver/%s.xml', $config['driver']));
 
         $this->registerResources('sylius', $config['driver'], $config['resources'], $container);
 
@@ -61,6 +63,11 @@ class SyliusProductExtension extends AbstractResourceExtension implements Prepen
         foreach ($configFiles as $configFile) {
             $loader->load($configFile);
         }
+
+        $formDefinition = $container->getDefinition('sylius.form.type.product_variant_generation');
+        $formDefinition->addArgument($container->getDefinition('sylius.form.listener.product_variant_generator'));
+        
+        $container->getDefinition('sylius.form.type.product')->addArgument(new Reference('sylius.variant_resolver.default'));
     }
 
     /**
@@ -76,7 +83,7 @@ class SyliusProductExtension extends AbstractResourceExtension implements Prepen
 
     /**
      * @param ContainerBuilder $container
-     * @param array            $config
+     * @param array $config
      */
     private function prependAttribute(ContainerBuilder $container, array $config)
     {
@@ -113,7 +120,7 @@ class SyliusProductExtension extends AbstractResourceExtension implements Prepen
 
     /**
      * @param ContainerBuilder $container
-     * @param array            $config
+     * @param array $config
      */
     private function prependVariation(ContainerBuilder $container, array $config)
     {
@@ -129,7 +136,6 @@ class SyliusProductExtension extends AbstractResourceExtension implements Prepen
                         'classes' => [
                             'model' => Variant::class,
                             'interface' => VariantInterface::class,
-                            'controller' => VariantController::class,
                             'factory' => ProductVariantFactory::class,
                             'form' => [
                                 'default' => VariantType::class,

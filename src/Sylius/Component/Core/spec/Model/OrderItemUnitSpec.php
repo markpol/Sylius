@@ -13,18 +13,22 @@ namespace spec\Sylius\Component\Core\Model;
 
 use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
+use Sylius\Component\Core\Model\AdjustmentInterface;
 use Sylius\Component\Core\Model\OrderItemInterface;
+use Sylius\Component\Core\Model\OrderItemUnit;
 use Sylius\Component\Core\Model\OrderItemUnitInterface;
 use Sylius\Component\Core\Model\ProductVariantInterface;
 use Sylius\Component\Inventory\Model\InventoryUnitInterface;
-use Sylius\Component\Order\Model\OrderItemUnit;
+use Sylius\Component\Order\Model\OrderItemUnit as BaseOrderItemUnit;
 use Sylius\Component\Shipping\Model\ShipmentInterface;
 use Sylius\Component\Shipping\Model\ShipmentUnitInterface;
 
 /**
+ * @mixin OrderItemUnit
+ *
  * @author Mateusz Zalewski <mateusz.zalewski@lakion.com>
  */
-class OrderItemUnitSpec extends ObjectBehavior
+final class OrderItemUnitSpec extends ObjectBehavior
 {
     function let(OrderItemInterface $orderItem)
     {
@@ -35,7 +39,7 @@ class OrderItemUnitSpec extends ObjectBehavior
 
     function it_is_initializable()
     {
-        $this->shouldHaveType('Sylius\Component\Core\Model\OrderItemUnit');
+        $this->shouldHaveType(OrderItemUnit::class);
     }
 
     function it_implements_order_item_unit_interface()
@@ -53,15 +57,9 @@ class OrderItemUnitSpec extends ObjectBehavior
         $this->shouldImplement(ShipmentUnitInterface::class);
     }
 
-    function it_is_order_item_unit()
+    function it_is_an_order_item_unit()
     {
-        $this->shouldHaveType(OrderItemUnit::class);
-    }
-
-    function its_inventory_state_is_mutable()
-    {
-        $this->setInventoryState('state');
-        $this->getInventoryState()->shouldReturn('state');
+        $this->shouldHaveType(BaseOrderItemUnit::class);
     }
 
     function its_shipment_is_mutable(ShipmentInterface $shipment)
@@ -89,16 +87,6 @@ class OrderItemUnitSpec extends ObjectBehavior
         $this->getStockable()->shouldReturn($variant);
     }
 
-    function it_can_be_sold_or_backorderded()
-    {
-        $this->setInventoryState(InventoryUnitInterface::STATE_SOLD);
-        $this->shouldBeSold();
-
-        $this->setInventoryState(InventoryUnitInterface::STATE_BACKORDERED);
-        $this->shouldBeBackordered();
-        $this->shouldNotBeSold();
-    }
-
     function its_shippable_is_order_item_variant(OrderItemInterface $orderItem, ProductVariantInterface $variant)
     {
         $orderItem->getVariant()->willReturn($variant);
@@ -106,9 +94,56 @@ class OrderItemUnitSpec extends ObjectBehavior
         $this->getShippable()->shouldReturn($variant);
     }
 
-    function its_shipping_state_is_mutable()
+    function it_returns_0_tax_total_when_there_are_no_tax_adjustments()
     {
-        $this->setShippingState(ShipmentInterface::STATE_SHIPPED);
-        $this->getShippingState()->shouldReturn(ShipmentInterface::STATE_SHIPPED);
+        $this->getTaxTotal()->shouldReturn(0);
+    }
+
+    function it_returns_sum_of_neutral_and_non_neutral_tax_adjustments_as_tax_total(
+        OrderItemInterface $orderItem,
+        AdjustmentInterface $nonNeutralTaxAdjustment,
+        AdjustmentInterface $neutralTaxAdjustment
+    ) {
+        $neutralTaxAdjustment->isNeutral()->willReturn(true);
+        $neutralTaxAdjustment->getType()->willReturn(AdjustmentInterface::TAX_ADJUSTMENT);
+        $neutralTaxAdjustment->getAmount()->willReturn(200);
+        $nonNeutralTaxAdjustment->isNeutral()->willReturn(false);
+        $nonNeutralTaxAdjustment->getType()->willReturn(AdjustmentInterface::TAX_ADJUSTMENT);
+        $nonNeutralTaxAdjustment->getAmount()->willReturn(300);
+
+        $orderItem->recalculateUnitsTotal()->shouldBeCalled();
+        $neutralTaxAdjustment->setAdjustable($this)->shouldBeCalled();
+        $nonNeutralTaxAdjustment->setAdjustable($this)->shouldBeCalled();
+        $this->addAdjustment($neutralTaxAdjustment);
+        $this->addAdjustment($nonNeutralTaxAdjustment);
+
+        $this->getTaxTotal()->shouldReturn(500);
+    }
+
+    function it_returns_only_sum_of_neutral_and_non_neutral_tax_adjustments_as_tax_total(
+        OrderItemInterface $orderItem,
+        AdjustmentInterface $nonNeutralTaxAdjustment,
+        AdjustmentInterface $neutralTaxAdjustment,
+        AdjustmentInterface $notTaxAdjustment
+    ) {
+        $neutralTaxAdjustment->isNeutral()->willReturn(true);
+        $neutralTaxAdjustment->getType()->willReturn(AdjustmentInterface::TAX_ADJUSTMENT);
+        $neutralTaxAdjustment->getAmount()->willReturn(200);
+        $nonNeutralTaxAdjustment->isNeutral()->willReturn(false);
+        $nonNeutralTaxAdjustment->getType()->willReturn(AdjustmentInterface::TAX_ADJUSTMENT);
+        $nonNeutralTaxAdjustment->getAmount()->willReturn(300);
+        $notTaxAdjustment->isNeutral()->willReturn(false);
+        $notTaxAdjustment->getType()->willReturn(AdjustmentInterface::ORDER_PROMOTION_ADJUSTMENT);
+        $notTaxAdjustment->getAmount()->willReturn(100);
+
+        $orderItem->recalculateUnitsTotal()->shouldBeCalled();
+        $neutralTaxAdjustment->setAdjustable($this)->shouldBeCalled();
+        $nonNeutralTaxAdjustment->setAdjustable($this)->shouldBeCalled();
+        $notTaxAdjustment->setAdjustable($this)->shouldBeCalled();
+        $this->addAdjustment($neutralTaxAdjustment);
+        $this->addAdjustment($nonNeutralTaxAdjustment);
+        $this->addAdjustment($notTaxAdjustment);
+
+        $this->getTaxTotal()->shouldReturn(500);
     }
 }

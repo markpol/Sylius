@@ -15,12 +15,18 @@ use Doctrine\Common\Collections\Collection;
 use Sylius\Component\Resource\Model\CodeAwareInterface;
 use Sylius\Component\Resource\Model\TimestampableInterface;
 use Sylius\Component\Resource\Model\ToggleableInterface;
+use Sylius\Component\Resource\Model\TranslatableInterface;
 
 /**
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  * @author Gonzalo Vilaseca <gvilaseca@reiss.co.uk>
  */
-interface ShippingMethodInterface extends CodeAwareInterface, ShippingMethodTranslationInterface, TimestampableInterface, ToggleableInterface
+interface ShippingMethodInterface extends
+    CodeAwareInterface,
+    ShippingMethodTranslationInterface,
+    TimestampableInterface,
+    ToggleableInterface,
+    TranslatableInterface
 {
     // Shippables requirement to match given method.
     const CATEGORY_REQUIREMENT_MATCH_NONE = 0;
@@ -86,26 +92,4 @@ interface ShippingMethodInterface extends CodeAwareInterface, ShippingMethodTran
      * @param array $configuration
      */
     public function setConfiguration(array $configuration);
-
-    /**
-     * @return Collection|RuleInterface[]
-     */
-    public function getRules();
-
-    /**
-     * @param RuleInterface $rule
-     *
-     * @return bool
-     */
-    public function hasRule(RuleInterface $rule);
-
-    /**
-     * @param RuleInterface $rule
-     */
-    public function addRule(RuleInterface $rule);
-
-    /**
-     * @param RuleInterface $rule
-     */
-    public function removeRule(RuleInterface $rule);
 }

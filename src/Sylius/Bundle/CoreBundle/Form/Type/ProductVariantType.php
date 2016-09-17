@@ -27,17 +27,15 @@ class ProductVariantType extends BaseVariantType
         parent::buildForm($builder, $options);
 
         $builder
-            ->add('sku', 'text', [
-                'label' => 'sylius.form.variant.sku',
-            ])
             ->add('price', 'sylius_money', [
                 'label' => 'sylius.form.variant.price',
             ])
             ->add('originalPrice', 'sylius_money', [
+                'required' => false,
                 'label' => 'sylius.form.variant.original_price',
             ])
-            ->add('availableOnDemand', 'checkbox', [
-                'label' => 'sylius.form.variant.available_on_demand',
+            ->add('tracked', 'checkbox', [
+                'label' => 'sylius.form.variant.tracked',
             ])
             ->add('onHand', 'integer', [
                 'label' => 'sylius.form.variant.on_hand',

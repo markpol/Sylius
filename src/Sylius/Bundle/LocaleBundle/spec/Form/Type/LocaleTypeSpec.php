@@ -19,7 +19,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 /**
  * @author Saša Stamenković <umpirsky@gmail.com>
  */
-class LocaleTypeSpec extends ObjectBehavior
+final class LocaleTypeSpec extends ObjectBehavior
 {
     function let()
     {
@@ -41,11 +41,13 @@ class LocaleTypeSpec extends ObjectBehavior
         $builder
             ->add('code', 'locale', Argument::any())
             ->willReturn($builder)
+            ->shouldBeCalled()
         ;
 
         $builder
             ->add('enabled', 'checkbox', Argument::any())
             ->willReturn($builder)
+            ->shouldBeCalled()
         ;
 
         $this->buildForm($builder, []);

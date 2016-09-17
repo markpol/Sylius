@@ -21,7 +21,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 /**
  * @author Saša Stamenković <umpirsky@gmail.com>
  */
-class CurrencyTypeSpec extends ObjectBehavior
+final class CurrencyTypeSpec extends ObjectBehavior
 {
     function let()
     {
@@ -42,6 +42,12 @@ class CurrencyTypeSpec extends ObjectBehavior
     {
         $builder
             ->add('exchangeRate', 'number', Argument::any())
+            ->willReturn($builder)
+        ;
+
+        $builder
+            ->add('enabled', 'checkbox', Argument::any())
+            ->shouldBeCalled()
             ->willReturn($builder)
         ;
 

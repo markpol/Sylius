@@ -16,11 +16,13 @@ use Doctrine\Common\Collections\Collection;
 use Sylius\Component\Cart\Model\Cart;
 use Sylius\Component\Channel\Model\ChannelInterface as BaseChannelInterface;
 use Sylius\Component\Core\OrderCheckoutStates;
-use Sylius\Component\Inventory\Model\InventoryUnitInterface;
+use Sylius\Component\Core\OrderPaymentStates;
+use Sylius\Component\Core\OrderShippingStates;
 use Sylius\Component\Payment\Model\PaymentInterface as BasePaymentInterface;
 use Sylius\Component\Promotion\Model\CouponInterface as BaseCouponInterface;
 use Sylius\Component\Promotion\Model\PromotionInterface as BasePromotionInterface;
-use Sylius\Component\User\Model\CustomerInterface as BaseCustomerInterface;
+use Sylius\Component\Customer\Model\CustomerInterface as BaseCustomerInterface;
+use Webmozart\Assert\Assert;
 
 /**
  * @author Paweł Jędrzejewski <pawel@sylius.org>
@@ -61,12 +63,17 @@ class Order extends Cart implements OrderInterface
     /**
      * @var string
      */
-    protected $currency;
+    protected $currencyCode;
 
     /**
      * @var float
      */
     protected $exchangeRate = 1.0;
+
+    /**
+     * @var string
+     */
+    protected $localeCode;
 
     /**
      * @var BaseCouponInterface
@@ -81,14 +88,14 @@ class Order extends Cart implements OrderInterface
     /**
      * @var string
      */
-    protected $paymentState = BasePaymentInterface::STATE_NEW;
+    protected $paymentState = OrderPaymentStates::STATE_CART;
 
     /**
      * It depends on the status of all order shipments.
      *
      * @var string
      */
-    protected $shippingState = OrderShippingStates::CHECKOUT;
+    protected $shippingState = OrderShippingStates::STATE_CART;
 
     /**
      * @var Collection|BasePromotionInterface[]
@@ -118,8 +125,6 @@ class Order extends Cart implements OrderInterface
     public function setCustomer(BaseCustomerInterface $customer = null)
     {
         $this->customer = $customer;
-
-        return $this;
     }
 
     /**
@@ -266,8 +271,6 @@ class Order extends Cart implements OrderInterface
         if (!$this->hasPayment($payment)) {
             $this->payments->add($payment);
             $payment->setOrder($this);
-
-            $this->setPaymentState($payment->getState());
         }
     }
 
@@ -297,12 +300,14 @@ class Order extends Cart implements OrderInterface
     public function getLastPayment($state = BasePaymentInterface::STATE_NEW)
     {
         if ($this->payments->isEmpty()) {
-            return false;
+            return null;
         }
 
-        return $this->payments->filter(function (BasePaymentInterface $payment) use ($state) {
+        $payment = $this->payments->filter(function (BasePaymentInterface $payment) use ($state) {
             return $payment->getState() === $state;
         })->last();
+
+        return $payment !== false ? $payment : null;
     }
 
     /**
@@ -346,6 +351,14 @@ class Order extends Cart implements OrderInterface
     /**
      * {@inheritdoc}
      */
+    public function removeShipments()
+    {
+        $this->shipments->clear();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function hasShipment(ShipmentInterface $shipment)
     {
         return $this->shipments->contains($shipment);
@@ -380,25 +393,25 @@ class Order extends Cart implements OrderInterface
      */
     public function getPromotionSubjectCount()
     {
-        return $this->items->count();
+        return $this->getTotalQuantity();
     }
 
     /**
      * {@inheritdoc}
      */
-    public function getCurrency()
+    public function getCurrencyCode()
     {
-        return $this->currency;
+        return $this->currencyCode;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function setCurrency($currency)
+    public function setCurrencyCode($currencyCode)
     {
-        $this->currency = $currency;
+        Assert::string($currencyCode);
 
-        return $this;
+        $this->currencyCode = $currencyCode;
     }
 
     /**
@@ -415,8 +428,24 @@ class Order extends Cart implements OrderInterface
     public function setExchangeRate($exchangeRate)
     {
         $this->exchangeRate = (float) $exchangeRate;
+    }
 
-        return $this;
+    /**
+     * {@inheritdoc}
+     */
+    public function getLocaleCode()
+    {
+        return $this->localeCode;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setLocaleCode($localeCode)
+    {
+        Assert::string($localeCode);
+
+        $this->localeCode = $localeCode;
     }
 
     /**
@@ -433,22 +462,6 @@ class Order extends Cart implements OrderInterface
     public function setShippingState($state)
     {
         $this->shippingState = $state;
-
-        return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function isBackorder()
-    {
-        foreach ($this->getItemUnits() as $itemUnit) {
-            if (InventoryUnitInterface::STATE_BACKORDERED === $itemUnit->getInventoryState()) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     /**
@@ -500,8 +513,6 @@ class Order extends Cart implements OrderInterface
         if (!$this->hasPromotion($promotion)) {
             $this->promotions->add($promotion);
         }
-
-        return $this;
     }
 
     /**
@@ -512,8 +523,6 @@ class Order extends Cart implements OrderInterface
         if ($this->hasPromotion($promotion)) {
             $this->promotions->removeElement($promotion);
         }
-
-        return $this;
     }
 
     /**
@@ -522,5 +531,54 @@ class Order extends Cart implements OrderInterface
     public function getPromotions()
     {
         return $this->promotions;
+    }
+
+    /**
+     * Returns sum of neutral and non neutral tax adjustments on order and total tax of order items.
+     *
+     * {@inheritdoc}
+     */
+    public function getTaxTotal()
+    {
+        $taxTotal = 0;
+
+        foreach ($this->getAdjustments(AdjustmentInterface::TAX_ADJUSTMENT) as $taxAdjustment) {
+            $taxTotal += $taxAdjustment->getAmount();
+        }
+        foreach ($this->items as $item) {
+            $taxTotal += $item->getTaxTotal();
+        }
+
+        return $taxTotal;
+    }
+
+    /**
+     * Returns shipping fee together with taxes decreased by shipping discount.
+     *
+     * @return int
+     */
+    public function getShippingTotal()
+    {
+        $shippingTotal = $this->getAdjustmentsTotal(AdjustmentInterface::SHIPPING_ADJUSTMENT);
+        $shippingTotal += $this->getAdjustmentsTotal(AdjustmentInterface::ORDER_SHIPPING_PROMOTION_ADJUSTMENT);
+        $shippingTotal += $this->getAdjustmentsTotal(AdjustmentInterface::TAX_ADJUSTMENT);
+
+        return $shippingTotal;
+    }
+
+    /**
+     * Returns amount of order discount. Does not include order item and shipping discounts.
+     *
+     * @return int
+     */
+    public function getOrderPromotionTotal()
+    {
+        $orderPromotionTotal = 0;
+
+        foreach ($this->items as $item) {
+            $orderPromotionTotal += $item->getAdjustmentsTotalRecursively(AdjustmentInterface::ORDER_PROMOTION_ADJUSTMENT);
+        }
+
+        return $orderPromotionTotal;
     }
 }

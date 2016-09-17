@@ -16,14 +16,12 @@ use Prophecy\Argument;
 use Sylius\Component\Core\Model\ChannelInterface;
 use Sylius\Component\Core\Model\PromotionInterface;
 use Sylius\Component\Core\Test\Factory\TestPromotionFactoryInterface;
-use Sylius\Component\Promotion\Model\ActionInterface;
-use Sylius\Component\Promotion\Model\RuleInterface;
 use Sylius\Component\Resource\Factory\FactoryInterface;
 
 /**
  * @author Mateusz Zalewski <mateusz.zalewski@lakion.com>
  */
-class TestPromotionFactorySpec extends ObjectBehavior
+final class TestPromotionFactorySpec extends ObjectBehavior
 {
     function let(FactoryInterface $promotionFactory)
     {

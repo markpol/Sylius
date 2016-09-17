@@ -48,9 +48,6 @@ class Configuration implements ConfigurationInterface
             ->addDefaultsIfNotSet()
             ->children()
                 ->scalarNode('driver')->defaultValue(SyliusResourceBundle::DRIVER_DOCTRINE_ORM)->cannotBeEmpty()->end()
-                ->scalarNode('provider')->defaultValue('sylius.cart_provider.default')->end()
-                ->scalarNode('resolver')->isRequired()->cannotBeEmpty()->end()
-                ->scalarNode('storage')->defaultValue('sylius.storage.session')->end()
             ->end()
         ;
 
@@ -80,6 +77,7 @@ class Configuration implements ConfigurationInterface
                                         ->scalarNode('model')->defaultValue(Cart::class)->cannotBeEmpty()->end()
                                         ->scalarNode('interface')->defaultValue(CartInterface::class)->cannotBeEmpty()->end()
                                         ->scalarNode('controller')->defaultValue(CartController::class)->cannotBeEmpty()->end()
+                                        ->scalarNode('repository')->cannotBeEmpty()->end()
                                         ->scalarNode('factory')->defaultValue(Factory::class)->cannotBeEmpty()->end()
                                         ->arrayNode('form')
                                             ->addDefaultsIfNotSet()
@@ -110,6 +108,7 @@ class Configuration implements ConfigurationInterface
                                         ->scalarNode('model')->defaultValue(CartItem::class)->cannotBeEmpty()->end()
                                         ->scalarNode('interface')->defaultValue(CartItemInterface::class)->cannotBeEmpty()->end()
                                         ->scalarNode('controller')->defaultValue(CartItemController::class)->cannotBeEmpty()->end()
+                                        ->scalarNode('repository')->cannotBeEmpty()->end()
                                         ->scalarNode('factory')->defaultValue(Factory::class)->cannotBeEmpty()->end()
                                         ->arrayNode('form')
                                             ->addDefaultsIfNotSet()

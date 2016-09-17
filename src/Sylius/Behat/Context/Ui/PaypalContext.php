@@ -12,46 +12,88 @@
 namespace Sylius\Behat\Context\Ui;
 
 use Behat\Behat\Context\Context;
-use Sylius\Behat\Page\External\PaypalExpressCheckoutPage;
+use Sylius\Behat\Page\External\PaypalExpressCheckoutPageInterface;
+use Sylius\Behat\Page\Shop\Checkout\CompletePageInterface;
+use Sylius\Behat\Page\Shop\Checkout\ThankYouPageInterface;
+use Sylius\Behat\Service\Mocker\PaypalApiMocker;
+use Sylius\Component\Core\Repository\OrderRepositoryInterface;
+use Sylius\Behat\Service\SharedStorageInterface;
+use Webmozart\Assert\Assert;
 
 /**
  * @author Arkadiusz Krakowiak <arkadiusz.krakowiak@lakion.com>
  */
-class PaypalContext implements Context
+final class PaypalContext implements Context
 {
     /**
-     * @var PaypalExpressCheckoutPage
+     * @var SharedStorageInterface
+     */
+    private $sharedStorage;
+
+    /**
+     * @var PaypalExpressCheckoutPageInterface
      */
     private $paypalExpressCheckoutPage;
 
     /**
-     * @var string
+     * @var ThankYouPageInterface
      */
-    private $paypalAccountName;
+    private $thankYouPage;
 
     /**
-     * @var string
+     * @var CompletePageInterface
      */
-    private $paypalAccountPassword;
+    private $summaryPage;
 
     /**
-     * @param PaypalExpressCheckoutPage $paypalExpressCheckoutPage
-     * @param string $paypalAccountName
-     * @param string $paypalAccountPassword
+     * @var PaypalApiMocker
      */
-    public function __construct(PaypalExpressCheckoutPage $paypalExpressCheckoutPage, $paypalAccountName, $paypalAccountPassword)
-    {
+    private $paypalApiMocker;
+
+    /**
+     * @var OrderRepositoryInterface
+     */
+    private $orderRepository;
+
+    /**
+     * @param SharedStorageInterface $sharedStorage
+     * @param PaypalExpressCheckoutPageInterface $paypalExpressCheckoutPage
+     * @param ThankYouPageInterface $thankYouPage
+     * @param CompletePageInterface $summaryPage
+     * @param PaypalApiMocker $paypalApiMocker
+     * @param OrderRepositoryInterface $orderRepository
+     */
+    public function __construct(
+        SharedStorageInterface $sharedStorage,
+        PaypalExpressCheckoutPageInterface $paypalExpressCheckoutPage,
+        ThankYouPageInterface $thankYouPage,
+        CompletePageInterface $summaryPage,
+        PaypalApiMocker $paypalApiMocker,
+        OrderRepositoryInterface $orderRepository
+    ) {
+        $this->sharedStorage = $sharedStorage;
         $this->paypalExpressCheckoutPage = $paypalExpressCheckoutPage;
-        $this->paypalAccountName = $paypalAccountName;
-        $this->paypalAccountPassword = $paypalAccountPassword;
+        $this->thankYouPage = $thankYouPage;
+        $this->summaryPage = $summaryPage;
+        $this->paypalApiMocker = $paypalApiMocker;
+        $this->orderRepository = $orderRepository;
     }
 
     /**
-     * @Then I should be redirected to PayPal Express Checkout page
+     * @Given /^I confirm my order with paypal payment$/
+     */
+    public function iConfirmMyOrderWithPaypalPayment()
+    {
+        $this->paypalApiMocker->mockApiPaymentInitializeResponse();
+        $this->summaryPage->confirmOrder();
+    }
+
+    /**
+     * @Then I should be redirected back to PayPal Express Checkout page
      */
     public function iShouldBeRedirectedToPaypalExpressCheckoutPage()
     {
-        expect($this->paypalExpressCheckoutPage->isOpen())->toBe(true);
+        Assert::true($this->paypalExpressCheckoutPage->isOpen());
     }
 
     /**
@@ -59,15 +101,26 @@ class PaypalContext implements Context
      */
     public function iSignInToPaypalAndPaySuccessfully()
     {
-        $this->paypalExpressCheckoutPage->logIn($this->paypalAccountName, $this->paypalAccountPassword);
+        $this->paypalApiMocker->mockApiSuccessfulPaymentResponse();
         $this->paypalExpressCheckoutPage->pay();
     }
 
     /**
-     * @When I cancel my PayPal payment
+     * @Given /^I have cancelled (?:|my )PayPal payment$/
+     * @When /^I cancel (?:|my )PayPal payment$/
      */
     public function iCancelMyPaypalPayment()
     {
         $this->paypalExpressCheckoutPage->cancel();
+    }
+
+    /**
+     * @Given /^I tried to pay(?:| again)$/
+     * @When /^I try to pay(?:| again)$/
+     */
+    public function iTryToPayAgain()
+    {
+        $this->paypalApiMocker->mockApiPaymentInitializeResponse();
+        $this->thankYouPage->pay();
     }
 }

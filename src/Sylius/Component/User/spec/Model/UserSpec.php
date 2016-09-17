@@ -12,22 +12,44 @@
 namespace spec\Sylius\Component\User\Model;
 
 use PhpSpec\ObjectBehavior;
+use Sylius\Component\User\Model\User;
 use Sylius\Component\User\Model\UserInterface;
 
 /**
+ * @mixin User
+ *
  * @author Alexandre Bacco <alexandre.bacco@gmail.com>
  * @author Bartosz Siejka <bartosz.siejka@lakion.com>
  */
-class UserSpec extends ObjectBehavior
+final class UserSpec extends ObjectBehavior
 {
     function it_is_initializable()
     {
-        $this->shouldHaveType('Sylius\Component\User\Model\User');
+        $this->shouldHaveType(User::class);
     }
 
     function it_implements_user_interface()
     {
         $this->shouldImplement(UserInterface::class);
+    }
+
+    function its_not_verified_by_default()
+    {
+        $this->isVerified()->shouldReturn(false);
+    }
+
+    function its_verified_at_date_is_mutable(\DateTime $date)
+    {
+        $this->setVerifiedAt($date);
+
+        $this->getVerifiedAt()->shouldReturn($date);
+    }
+
+    function its_verified_when_verified_at_is_not_empty(\DateTime $date)
+    {
+        $this->setVerifiedAt($date);
+
+        $this->isVerified()->shouldReturn(true);
     }
 
     function it_has_no_password_requested_at_date_by_default()
@@ -61,24 +83,12 @@ class UserSpec extends ObjectBehavior
         $this->isPasswordRequestNonExpired($ttl)->shouldReturn(false);
     }
 
-    function it_should_return_true_if_user_is_deleted()
+    function it_has_email_and_email_canonical()
     {
-        $deletedAt = new \DateTime('yesterday');
-        $this->setDeletedAt($deletedAt);
+        $this->setEmail('admin@example.com');
+        $this->setEmailCanonical('user@example.com');
 
-        $this->shouldBeDeleted();
-    }
-
-    function it_should_return_false_if_user_is_not_deleted()
-    {
-        $this->shouldNotBeDeleted();
-    }
-
-    function it_should_return_false_if_user_deleted_time_is_future_date()
-    {
-        $deletedAt = new \DateTime('tomorrow');
-        $this->setDeletedAt($deletedAt);
-
-        $this->shouldNotBeDeleted();
+        $this->getEmail()->shouldReturn('admin@example.com');
+        $this->getEmailCanonical()->shouldReturn('user@example.com');
     }
 }

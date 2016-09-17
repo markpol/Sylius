@@ -11,13 +11,16 @@
 
 namespace Sylius\Behat\Page;
 
+use Behat\Mink\Element\NodeElement;
 use Behat\Mink\Session;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Routing\RequestContext;
 use Symfony\Component\Routing\RouterInterface;
 
 /**
  * @author Arkadiusz Krakowiak <arkadiusz.krakowiak@lakion.com>
  */
-abstract class SymfonyPage extends Page
+abstract class SymfonyPage extends Page implements SymfonyPageInterface
 {
     /**
      * @var RouterInterface
@@ -39,16 +42,31 @@ abstract class SymfonyPage extends Page
     /**
      * {@inheritdoc}
      */
+    abstract public function getRouteName();
+
+    /**
+     * @param array $urlParameters
+     *
+     * @return string
+     */
     protected function getUrl(array $urlParameters = [])
     {
-        if (null === $this->getRouteName()) {
-            throw new \RuntimeException('You need to provide route name, null given');
-        }
+        $path = $this->router->generate($this->getRouteName(), $urlParameters);
 
-        $url = $this->router->generate($this->getRouteName(), $urlParameters);
-        $url = $this->makePathAbsoluteWithBehatParameter($url);
+        return $this->makePathAbsolute($path);
+    }
 
-        return $url;
+    /**
+     * @param NodeElement $modalContainer
+     * @param string $appearClass
+     *
+     * @todo it really shouldn't be here :)
+     */
+    protected function waitForModalToAppear(NodeElement $modalContainer, $appearClass = 'in')
+    {
+        $this->getDocument()->waitFor(1, function () use ($modalContainer, $appearClass) {
+            return false !== strpos($modalContainer->getAttribute('class'), $appearClass);
+        });
     }
 
     /**
@@ -56,24 +74,10 @@ abstract class SymfonyPage extends Page
      *
      * @return string
      */
-    protected function makePathAbsoluteWithBehatParameter($path)
+    final protected function makePathAbsolute($path)
     {
         $baseUrl = rtrim($this->getParameter('base_url'), '/').'/';
 
         return 0 !== strpos($path, 'http') ? $baseUrl.ltrim($path, '/') : $path;
     }
-
-    /**
-     * {@inheritdoc}
-     *
-     * Not used by Symfony page.
-     */
-    protected function getPath()
-    {
-    }
-
-    /**
-     * @return string
-     */
-    abstract protected function getRouteName();
 }

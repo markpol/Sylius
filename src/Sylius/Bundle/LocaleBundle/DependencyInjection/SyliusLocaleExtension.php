@@ -14,40 +14,47 @@ namespace Sylius\Bundle\LocaleBundle\DependencyInjection;
 use Sylius\Bundle\ResourceBundle\DependencyInjection\Extension\AbstractResourceExtension;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 use Symfony\Component\DependencyInjection\Reference;
 
 /**
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
-class SyliusLocaleExtension extends AbstractResourceExtension
+final class SyliusLocaleExtension extends AbstractResourceExtension implements PrependExtensionInterface
 {
     /**
      * {@inheritdoc}
      */
     public function load(array $config, ContainerBuilder $container)
     {
-        $config = $this->processConfiguration(new Configuration(), $config);
+        $config = $this->processConfiguration($this->getConfiguration($config, $container), $config);
         $loader = new XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
 
         $this->registerResources('sylius', $config['driver'], $config['resources'], $container);
 
-        $configFiles = [
-            'services.xml',
-            'templating.xml',
-            'twig.xml',
-        ];
+        $loader->load('services.xml');
 
-        foreach ($configFiles as $configFile) {
-            $loader->load($configFile);
-        }
-
-        $definition = $container->findDefinition('sylius.context.locale');
-        $definition->replaceArgument(0, new Reference($config['storage']));
+        $container->setParameter('sylius_locale.locale', $config['locale']);
 
         $container
             ->getDefinition('sylius.form.type.locale_choice')
             ->setArguments([new Reference('sylius.repository.locale')])
         ;
+
+        $container->findDefinition('sylius.repository.locale')->setLazy(true);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function prepend(ContainerBuilder $container)
+    {
+        $container->prependExtensionConfig('sylius_resource', [
+            'translation' => [
+                'locale_provider' => 'sylius.locale_provider',
+                'locale_context' => 'sylius.context.locale',
+            ],
+        ]);
     }
 }

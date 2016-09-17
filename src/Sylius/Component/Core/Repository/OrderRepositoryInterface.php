@@ -11,6 +11,8 @@
 
 namespace Sylius\Component\Core\Repository;
 
+use Doctrine\ORM\QueryBuilder;
+use Pagerfanta\PagerfantaInterface;
 use Sylius\Component\Core\Model\CouponInterface;
 use Sylius\Component\Core\Model\CustomerInterface;
 use Sylius\Component\Core\Model\OrderInterface;
@@ -19,54 +21,126 @@ use Sylius\Component\Order\Repository\OrderRepositoryInterface as BaseOrderRepos
 interface OrderRepositoryInterface extends BaseOrderRepositoryInterface
 {
     /**
-     * Gets expired orders.
+     * @return QueryBuilder
+     */
+    public function createListQueryBuilder();
+    
+    /**
+     * @param CustomerInterface $customer
      *
+     * @return QueryBuilder
+     */
+    public function createByCustomerQueryBuilder(CustomerInterface $customer);
+
+    /**
      * @param \DateTime $expiresAt
-     * @param string    $state
+     * @param string $state
      *
      * @return OrderInterface[]
      */
-    public function findExpired(\DateTime $expiresAt, $state = OrderInterface::STATE_PENDING);
+    public function findExpired(\DateTime $expiresAt, $state = OrderInterface::STATE_NEW);
 
     /**
-     * Gets the number of orders placed by the customer
-     * for a particular coupon.
-     *
      * @param CustomerInterface $customer
-     * @param CouponInterface   $coupon
+     * @param CouponInterface $coupon
      *
      * @return int
      */
     public function countByCustomerAndCoupon(CustomerInterface $customer, CouponInterface $coupon);
 
     /**
-     * Gets the number of orders placed by the customer
-     * with particular state.
-     *
      * @param CustomerInterface $customer
-     * @param string            $state
      *
      * @return int
      */
-    public function countByCustomerAndPaymentState(CustomerInterface $customer, $state);
+    public function countByCustomer(CustomerInterface $customer);
 
     /**
-     * Gets revenue group by date
-     * between particular dates
+     * @param CustomerInterface $customer
+     * @param array $sorting
      *
-     * @param array $configuration
-     *
-     * @return array
+     * @return PagerfantaInterface
      */
-    public function revenueBetweenDatesGroupByDate(array $configuration = []);
+    public function createPaginatorByCustomer(CustomerInterface $customer, array $sorting = []);
 
     /**
-     * Gets number of orders group by date
-     * between particular dates
-     * 
-     * @param array $configuration
+     * @param CustomerInterface $customer
+     * @param array $sorting
      *
-     * @return array
+     * @return OrderInterface[]
      */
-    public function ordersBetweenDatesGroupByDate(array $configuration = []);
+    public function findByCustomer(CustomerInterface $customer, array $sorting = []);
+
+    /**
+     * @param int $id
+     *
+     * @return OrderInterface|null
+     */
+    public function findForDetailsPage($id);
+    
+    /**
+     * @param int $id
+     *
+     * @return OrderInterface|null
+     */
+    public function findOneForPayment($id);
+
+    /**
+     * @param array $criteria
+     * @param array $sorting
+     *
+     * @return PagerfantaInterface
+     */
+    public function createFilterPaginator(array $criteria = null, array $sorting = null);
+
+    /**
+     * @param array $criteria
+     * @param array $sorting
+     *
+     * @return PagerfantaInterface
+     */
+    public function createCheckoutsPaginator(array $criteria = null, array $sorting = null);
+
+    /**
+     * @param \DateTime $from
+     * @param \DateTime $to
+     * @param string|null $state
+     *
+     * @return OrderInterface[]
+     */
+    public function findBetweenDates(\DateTime $from, \DateTime $to, $state = null);
+
+    /**
+     * @param \DateTime $from
+     * @param \DateTime $to
+     * @param string|null $state
+     *
+     * @return int
+     */
+    public function countBetweenDates(\DateTime $from, \DateTime $to, $state = null);
+
+    /**
+     * @param \DateTime $from
+     * @param \DateTime $to
+     * @param string|null $state
+     *
+     * @return int
+     */
+    public function revenueBetweenDates(\DateTime $from, \DateTime $to, $state = null);
+
+    /**
+     * @param array $sorting
+     * @param int $limit
+     *
+     * @return OrderInterface[]
+     */
+    public function findCompleted(array $sorting = [], $limit = 5);
+
+    /**
+     * @param string $number
+     * @param CustomerInterface $customer
+     *
+     * @return OrderInterface|null
+     */
+    public function findOneByNumberAndCustomer($number, CustomerInterface $customer);
 }

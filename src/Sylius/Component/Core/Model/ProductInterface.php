@@ -11,10 +11,7 @@
 
 namespace Sylius\Component\Core\Model;
 
-use Doctrine\Common\Collections\Collection;
-use Sylius\Component\Addressing\Model\ZoneInterface;
 use Sylius\Component\Channel\Model\ChannelsAwareInterface;
-use Sylius\Component\Metadata\Model\MetadataSubjectInterface;
 use Sylius\Component\Product\Model\ProductInterface as BaseProductInterface;
 use Sylius\Component\Review\Model\ReviewableInterface;
 use Sylius\Component\Shipping\Model\ShippingCategoryInterface;
@@ -28,7 +25,6 @@ interface ProductInterface extends
     BaseProductInterface,
     TaxonsAwareInterface,
     ChannelsAwareInterface,
-    MetadataSubjectInterface,
     ReviewableInterface
 {
     /*
@@ -43,16 +39,6 @@ interface ProductInterface extends
     const VARIANT_SELECTION_MATCH = 'match';
 
     const METADATA_CLASS_IDENTIFIER = 'Product';
-
-    /**
-     * @return string
-     */
-    public function getSku();
-
-    /**
-     * @param string $sku
-     */
-    public function setSku($sku);
 
     /**
      * @return string
@@ -95,40 +81,6 @@ interface ProductInterface extends
     public function setShippingCategory(ShippingCategoryInterface $category = null);
 
     /**
-     * Get master variant price.
-     *
-     * @return int
-     */
-    public function getPrice();
-
-    /**
-     * Set master variant price.
-     *
-     * @param int $price
-     */
-    public function setPrice($price);
-
-    /**
-     * @return ZoneInterface
-     */
-    public function getRestrictedZone();
-
-    /**
-     * @param ZoneInterface $zone
-     */
-    public function setRestrictedZone(ZoneInterface $zone = null);
-
-    /**
-     * @return Collection|ImageInterface[]
-     */
-    public function getImages();
-
-    /**
-     * @return ImageInterface
-     */
-    public function getImage();
-
-    /**
      * @return TaxonInterface
      */
     public function getMainTaxon();
@@ -137,4 +89,24 @@ interface ProductInterface extends
      * @param TaxonInterface $mainTaxon
      */
     public function setMainTaxon(TaxonInterface $mainTaxon = null);
+
+    /**
+     * @return ProductVariantInterface
+     */
+    public function getFirstVariant();
+
+    /**
+     * @return int
+     */
+    public function getPrice();
+
+    /**
+     * @return ImageInterface
+     */
+    public function getImage();
+
+    /**
+     * @return ImageInterface[]
+     */
+    public function getImages();
 }

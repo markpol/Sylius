@@ -2,17 +2,39 @@
 # (c) Paweł Jędrzejewski
 
 sylius:
-  locale:
-    code:
-      not_blank: Bitte lokalen Code eingeben.
-      unique: Locale existiert bereits.
-  product_variant:
-    onHand:
-      min: 'Menge muss größer sein als {{ limit }}.'
-      not_blank: Bitte verfügbare Menge eingeben.
-    price:
-      min: Preis darf nicht negativ sein.
-      not_blank: Bitte Preis eingeben.
-  product_translation:
-    short_description:
-      max: 'Kurzbeschreibung darf nicht länger als {{ limit }} Zeichen sein.'
+    channel:
+        default_currency:
+            not_blank: Bitte wählen Sie die Standardwährung für diesen Kanal.
+        default_locale:
+            not_blank: Bitte wählen Sie die Standardsprache für diesen Kanal.
+    checkout:
+        shipping_method:
+            not_blank: Bitte wählen Sie eine Versandart aus.
+    customer:
+        currency_code:
+            not_valid: Der eingegebene Währungscode ist ungültig.
+    order:
+        currency_code:
+            not_valid: Der eingegebene Währungscode ist ungültig.
+    locale:
+        code:
+            not_blank: Bitte lokalen Code eingeben.
+            unique: Locale existiert bereits.
+    product_variant:
+        onHand:
+            min: 'Menge muss größer sein als {{ limit }}.'
+            not_blank: Bitte verfügbare Menge eingeben.
+        price:
+            min: Preis darf nicht negativ sein.
+            not_blank: Bitte Preis eingeben.
+        original_price:
+            min: Ursprünglicher Preis darf nicht negativ sein.
+    product_translation:
+        short_description:
+            max: 'Kurzbeschreibung darf nicht länger als {{ limit }} Zeichen sein.'
+    user:
+        email:
+            unique: Diese E-Mail-Adresse wird bereits verwendet.
+        username:
+            unique: Der Benutzername wird bereits verwendet.
+            not_blank: Bitte geben Sie Ihren Namen ein.

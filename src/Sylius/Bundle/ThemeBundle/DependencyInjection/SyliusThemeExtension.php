@@ -11,36 +11,150 @@
 
 namespace Sylius\Bundle\ThemeBundle\DependencyInjection;
 
+use Sylius\Bundle\ThemeBundle\Configuration\ConfigurationSourceFactoryInterface;
 use Symfony\Component\Config\FileLocator;
+use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Definition;
+use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;
 use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
+use Symfony\Component\DependencyInjection\Reference;
 
 /**
  * @author Kamil Kokot <kamil.kokot@lakion.com>
  */
-class SyliusThemeExtension extends Extension
+final class SyliusThemeExtension extends Extension implements PrependExtensionInterface
 {
+    /**
+     * @var ConfigurationSourceFactoryInterface[]
+     */
+    private $configurationSourceFactories = [];
+
+    /**
+     * @internal
+     *
+     * {@inheritdoc}
+     */
+    public function load(array $config, ContainerBuilder $container)
+    {
+        $config = $this->processConfiguration($this->getConfiguration($config, $container), $config);
+        $loader = new XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config/services'));
+        $loader->load('services.xml');
+
+        if ($config['assets']['enabled']) {
+            $loader->load('support/assets.xml');
+        }
+
+        if ($config['templating']['enabled']) {
+            $loader->load('support/templating.xml');
+        }
+
+        if ($config['translations']['enabled']) {
+            $loader->load('support/translations.xml');
+        }
+
+        $this->resolveConfigurationSources($container, $config);
+
+        $container->setAlias('sylius.context.theme', $config['context']);
+    }
+
+    /**
+     * @internal
+     *
+     * {@inheritdoc}
+     */
+    public function prepend(ContainerBuilder $container)
+    {
+        $loader = new XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config/services'));
+
+        $this->prependSyliusSettings($container, $loader);
+        $this->prependTwig($container, $loader);
+    }
+
+    /**
+     * @api
+     *
+     * @param ConfigurationSourceFactoryInterface $configurationSourceFactory
+     */
+    public function addConfigurationSourceFactory(ConfigurationSourceFactoryInterface $configurationSourceFactory)
+    {
+        $this->configurationSourceFactories[$configurationSourceFactory->getName()] = $configurationSourceFactory;
+    }
+
     /**
      * {@inheritdoc}
      */
-    public function load(array $configs, ContainerBuilder $container)
+    public function getConfiguration(array $config, ContainerBuilder $container)
     {
-        $config = $this->processConfiguration(new Configuration(), $configs);
+        $configuration = new Configuration($this->configurationSourceFactories);
 
-        $loader = new XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config/services'));
-        $loader->load('assets.xml');
-        $loader->load('configuration.xml');
-        $loader->load('resource_locators.xml');
-        $loader->load('services.xml');
-        $loader->load('templating.xml');
-        $loader->load('translations.xml');
+        $container->addObjectResource($configuration);
 
-        // TODO: Interfaces ready for filesystem decoupling, configuration not ready yet
-        $loader->load('filesystem_configuration.xml');
-        $container->setAlias('sylius.theme.configuration.loader', 'sylius.theme.configuration.loader.json_file');
-        $container->setAlias('sylius.theme.configuration.provider', 'sylius.theme.configuration.provider.filesystem');
+        return $configuration;
+    }
 
-        $container->setParameter('sylius.theme.configuration.filesystem.locations', $config['sources']['filesystem']['locations']);
+    /**
+     * @param ContainerBuilder $container
+     * @param LoaderInterface $loader
+     */
+    private function prependSyliusSettings(ContainerBuilder $container, LoaderInterface $loader)
+    {
+        if (!$container->hasExtension('sylius_settings')) {
+            return;
+        }
+
+        $loader->load('integration/settings.xml');
+    }
+
+    /**
+     * @param ContainerBuilder $container
+     * @param LoaderInterface $loader
+     */
+    private function prependTwig(ContainerBuilder $container, LoaderInterface $loader)
+    {
+        if (!$container->hasExtension('twig')) {
+            return;
+        }
+
+        $loader->load('integration/twig.xml');
+    }
+
+    /**
+     * @param ContainerBuilder $container
+     * @param array $config
+     *
+     * @return mixed
+     */
+    private function resolveConfigurationSources(ContainerBuilder $container, array $config)
+    {
+        $configurationProviders = [];
+        foreach ($this->configurationSourceFactories as $configurationSourceFactory) {
+            $sourceName = $configurationSourceFactory->getName();
+            if (isset($config['sources'][$sourceName]) && $config['sources'][$sourceName]['enabled']) {
+                $sourceConfig = $config['sources'][$sourceName];
+
+                $configurationProvider = $configurationSourceFactory->initializeSource($container, $sourceConfig);
+
+                if (!$configurationProvider instanceof Reference && !$configurationProvider instanceof Definition) {
+                    throw new \InvalidArgumentException(sprintf(
+                        'Source factory "%s" was expected to return an instance of "%s" or "%s", "%s" found',
+                        $configurationSourceFactory->getName(),
+                        Reference::class,
+                        Definition::class,
+                        is_object($configurationProvider) ? get_class($configurationProvider) : gettype($configurationProvider)
+                    ));
+                }
+
+                $configurationProviders[] = $configurationProvider;
+            }
+        }
+
+        $compositeConfigurationProvider = $container->getDefinition('sylius.theme.configuration.provider');
+        $compositeConfigurationProvider->replaceArgument(0, $configurationProviders);
+
+        foreach ($this->configurationSourceFactories as $configurationSourceFactory) {
+            $container->addObjectResource($configurationSourceFactory);
+        }
     }
 }

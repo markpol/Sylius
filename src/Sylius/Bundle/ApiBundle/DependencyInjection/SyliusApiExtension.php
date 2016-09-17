@@ -21,7 +21,7 @@ use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
 /**
  * Api extension.
  *
- * @author Paweł Jędrzejewski <pjedrzejewski@sylius.pl>
+ * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
 class SyliusApiExtension extends AbstractResourceExtension implements PrependExtensionInterface
 {
@@ -30,7 +30,7 @@ class SyliusApiExtension extends AbstractResourceExtension implements PrependExt
      */
     public function load(array $config, ContainerBuilder $container)
     {
-        $config = $this->processConfiguration(new Configuration(), $config);
+        $config = $this->processConfiguration($this->getConfiguration($config, $container), $config);
         $loader = new XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
 
         $this->registerResources('sylius', $config['driver'], $config['resources'], $container);
@@ -66,7 +66,7 @@ class SyliusApiExtension extends AbstractResourceExtension implements PrependExt
             'auth_code_class' => $resourcesConfig['api_auth_code']['classes']['model'],
 
             'service' => [
-                'user_provider' => 'sylius.user_provider.name_or_email',
+                'user_provider' => 'sylius.admin_user.provider.email_or_name_based',
                 'client_manager' => 'sylius.oauth_server.client_manager',
             ],
         ]);

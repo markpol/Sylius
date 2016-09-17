@@ -21,7 +21,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 /**
  * @author Saša Stamenković <umpirsky@gmail.com>
  */
-class ChannelTypeSpec extends ObjectBehavior
+final class ChannelTypeSpec extends ObjectBehavior
 {
     function let()
     {
@@ -53,7 +53,7 @@ class ChannelTypeSpec extends ObjectBehavior
         ;
 
         $builder
-            ->add('description', 'text', Argument::any())
+            ->add('description', 'textarea', Argument::any())
             ->shouldBeCalled()
             ->willReturn($builder)
         ;

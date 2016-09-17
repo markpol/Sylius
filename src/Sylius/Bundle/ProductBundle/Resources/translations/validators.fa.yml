@@ -1,0 +1,16 @@
+# This file is part of the Sylius package.
+# (c) Paweł Jędrzejewski
+
+sylius:
+    product:
+        sku:
+            not_blank: کد محصول را وارد کنید.
+            unique: کد محصول باید منحصر به فرد باشد.
+        name:
+            not_blank: لطفا نام محصول را وارد کنید.
+            min_length: 'نام محصول حداقل باید 1 حرف باشد. | نام محصول باید حداقل {{ limit }} حرف باشد.'
+            max_length: 'نام محصول نباید بیش از 1 حرف باشد. | نام محصول نباید بیش از {{ limit }} حرف باشد.'
+    variant:
+        sku:
+            not_blank: لطفا کد نوع محصول را وارد کنید.
+            unique: کد نوع محصول باید منحصر به فرد باشد.

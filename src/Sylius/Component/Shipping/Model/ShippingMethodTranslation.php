@@ -11,7 +11,7 @@
 
 namespace Sylius\Component\Shipping\Model;
 
-use Sylius\Component\Translation\Model\AbstractTranslation;
+use Sylius\Component\Resource\Model\AbstractTranslation;
 
 /**
  * @author Gonzalo Vilaseca <gvilaseca@reiss.co.uk>
@@ -27,6 +27,11 @@ class ShippingMethodTranslation extends AbstractTranslation implements ShippingM
      * @var string
      */
     protected $name;
+
+    /**
+     * @var string
+     */
+    protected $description;
 
     /**
      * {@inheritdoc}
@@ -58,5 +63,21 @@ class ShippingMethodTranslation extends AbstractTranslation implements ShippingM
     public function setName($name)
     {
         $this->name = $name;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getDescription()
+    {
+        return $this->description;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setDescription($description)
+    {
+        $this->description = $description;
     }
 }

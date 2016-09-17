@@ -2,12 +2,31 @@
 # (c) Paweł Jędrzejewski
 
 sylius:
-  form:
-    attribute:
-      add: Hinzufügen
-      choices: Auswahlmöglichkeiten
-      code: Code
-      name: Name
-      type: Typ
-    attribute_type:
-      configuration: Einstellung
+    form:
+        attribute:
+            add: Hinzufügen
+            add_attributes: Attribute hinzufügen
+            choices: Auswahlmöglichkeiten
+            code: Code
+            name: Name
+            translations: Übersetzungen
+            type: Typ
+        attribute_type:
+            checkbox: Kontrollkästchen
+            configuration: Einstellung
+            date: Datum
+            datetime: Datum / Zeit
+            integer: Integer
+            percent: Prozent
+            text: Text
+            textarea: Textfeld
+            title: Attributtyp
+            validation: Überprüfung
+        attribute_type_configuration:
+            datetime:
+                format: Format
+            date:
+                format: Format
+            text:
+                min: Mindestlänge
+                max: Maximale Länge

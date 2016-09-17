@@ -2,8 +2,21 @@
 # (c) Paweł Jędrzejewski
 
 sylius:
-  menu:
-    admin:
-      main:
-        configuration:
-          header: Παραμετροποίηση
+    menu:
+        admin:
+            main:
+                catalog:
+                    options: Επιλογές
+                    products: Προϊόντα
+                configuration:
+                    countries: Χώρες
+                    header: Παραμετροποίηση
+                    payment_methods: Τρόποι πληρωμής
+                    tax_rates: Φορολογικοί συντελεστές
+                    zones: Ζώνες
+                marketing:
+                    promotions: Προσφορές
+                sales:
+                    orders: Παραγγελίες
+                content:
+                    header: Περιεχόμενο

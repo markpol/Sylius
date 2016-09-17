@@ -11,9 +11,7 @@
 
 namespace Sylius\Component\Product\Factory;
 
-use Sylius\Component\Archetype\Builder\ArchetypeBuilderInterface;
 use Sylius\Component\Resource\Factory\FactoryInterface;
-use Sylius\Component\Resource\Repository\RepositoryInterface;
 
 /**
  * @author Paweł Jędrzejewski <pawel@sylius.org>
@@ -27,31 +25,19 @@ class ProductFactory implements ProductFactoryInterface
     private $factory;
 
     /**
-     * @var RepositoryInterface
-     */
-    private $archetypeRepository;
-
-    /**
-     * @var ArchetypeBuilderInterface
-     */
-    private $archetypeBuilder;
-
-    /**
      * @var FactoryInterface
      */
     private $variantFactory;
 
     /**
      * @param FactoryInterface $factory
-     * @param RepositoryInterface $archetypeRepository
-     * @param ArchetypeBuilderInterface $archetypeBuilder
      * @param FactoryInterface $variantFactory
      */
-    public function __construct(FactoryInterface $factory, RepositoryInterface $archetypeRepository, ArchetypeBuilderInterface $archetypeBuilder, FactoryInterface $variantFactory)
-    {
+    public function __construct(
+        FactoryInterface $factory,
+        FactoryInterface $variantFactory
+    ) {
         $this->factory = $factory;
-        $this->archetypeRepository = $archetypeRepository;
-        $this->archetypeBuilder = $archetypeBuilder;
         $this->variantFactory = $variantFactory;
     }
 
@@ -60,27 +46,18 @@ class ProductFactory implements ProductFactoryInterface
      */
     public function createNew()
     {
-        $variant = $this->variantFactory->createNew();
-        $variant->setMaster(true);
-
-        $product = $this->factory->createNew();
-        $product->setMasterVariant($variant);
-
-        return $product;
+        return $this->factory->createNew();
     }
 
     /**
      * {@inheritdoc}
      */
-    public function createFromArchetype($archetypeCode)
+    public function createWithVariant()
     {
-        if (null === $archetype = $this->archetypeRepository->findOneBy(['code' => $archetypeCode])) {
-            throw new \InvalidArgumentException(sprintf('Requested archetype does not exist with code "%s".', $archetypeCode));
-        }
+        $variant = $this->variantFactory->createNew();
 
-        $product = $this->createNew();
-        $product->setArchetype($archetype);
-        $this->archetypeBuilder->build($product);
+        $product = $this->factory->createNew();
+        $product->addVariant($variant);
 
         return $product;
     }

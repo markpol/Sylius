@@ -20,6 +20,7 @@ use Sylius\Bundle\ApiBundle\Model\Client;
 use Sylius\Bundle\ApiBundle\Model\ClientInterface;
 use Sylius\Bundle\ApiBundle\Model\RefreshToken;
 use Sylius\Bundle\ApiBundle\Model\RefreshTokenInterface;
+use Sylius\Bundle\ApiBundle\Model\UserInterface;
 use Sylius\Bundle\ResourceBundle\Controller\ResourceController;
 use Sylius\Bundle\ResourceBundle\SyliusResourceBundle;
 use Sylius\Component\Resource\Factory\Factory;
@@ -33,7 +34,7 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
  * This information is solely responsible for how the different configuration
  * sections are normalized, and merged.
  *
- * @author Paweł Jędrzejewski <pjedrzejewski@diweb.pl>
+ * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
 class Configuration implements ConfigurationInterface
 {
@@ -73,6 +74,7 @@ class Configuration implements ConfigurationInterface
                                     ->addDefaultsIfNotSet()
                                     ->children()
                                         ->scalarNode('model')->isRequired()->cannotBeEmpty()->end()
+                                        ->scalarNode('interface')->defaultValue(UserInterface::class)->cannotBeEmpty()->end()
                                     ->end()
                                 ->end()
                             ->end()

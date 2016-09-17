@@ -26,7 +26,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  * @author Leszek Prabucki <leszek.prabucki@gmail.pl>
  * @author Gonzalo Vilaseca <gvilaseca@reiss.co.uk>
  */
-class AttributeTypeSpec extends ObjectBehavior
+final class AttributeTypeSpec extends ObjectBehavior
 {
     function let(FormBuilder $builder, FormFactoryInterface $formFactory, ServiceRegistryInterface $attributeTypeRegistry)
     {
@@ -58,7 +58,7 @@ class AttributeTypeSpec extends ObjectBehavior
         ;
 
         $builder
-            ->add('translations', 'a2lix_translationsForms', Argument::any())
+            ->add('translations', 'sylius_translations', Argument::any())
             ->shouldBeCalled()
             ->willReturn($builder)
         ;

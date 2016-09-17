@@ -25,7 +25,7 @@ use Symfony\Component\Form\FormTypeInterface;
 /**
  * @author Mateusz Zalewski <mateusz.zalewski@lakion.com>
  */
-class ShippingMethodTypeSpec extends ObjectBehavior
+final class ShippingMethodTypeSpec extends ObjectBehavior
 {
     function let(ServiceRegistryInterface $calculatorRegistry, ServiceRegistryInterface $checkerRegistry, FormRegistryInterface $formRegistry)
     {
@@ -67,7 +67,7 @@ class ShippingMethodTypeSpec extends ObjectBehavior
         ;
 
         $builder
-            ->add('translations', 'a2lix_translationsForms', Argument::any())
+            ->add('translations', 'sylius_translations', Argument::any())
             ->willReturn($builder)
         ;
 
@@ -85,6 +85,12 @@ class ShippingMethodTypeSpec extends ObjectBehavior
 
         $builder
             ->add('calculator', 'sylius_shipping_calculator_choice', Argument::any())
+            ->shouldBeCalled()
+            ->willReturn($builder)
+        ;
+
+        $builder
+            ->add('enabled', 'checkbox', Argument::any())
             ->shouldBeCalled()
             ->willReturn($builder)
         ;

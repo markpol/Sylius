@@ -13,16 +13,19 @@ namespace spec\Sylius\Component\Promotion\Model;
 
 use PhpSpec\ObjectBehavior;
 use Sylius\Component\Promotion\Model\PromotionInterface;
+use Sylius\Component\Promotion\Model\Rule;
 use Sylius\Component\Promotion\Model\RuleInterface;
 
 /**
+ * @mixin Rule
+ *
  * @author Saša Stamenković <umpirsky@gmail.com>
  */
-class RuleSpec extends ObjectBehavior
+final class RuleSpec extends ObjectBehavior
 {
     function it_is_initializable()
     {
-        $this->shouldHaveType('Sylius\Component\Promotion\Model\Rule');
+        $this->shouldHaveType(Rule::class);
     }
 
     function it_should_be_Sylius_promotion_rule()
@@ -42,8 +45,8 @@ class RuleSpec extends ObjectBehavior
 
     function its_type_should_be_mutable()
     {
-        $this->setType(RuleInterface::TYPE_ITEM_TOTAL);
-        $this->getType()->shouldReturn(RuleInterface::TYPE_ITEM_TOTAL);
+        $this->setType('type');
+        $this->getType()->shouldReturn('type');
     }
 
     function it_should_initialize_array_for_configuration_by_default()

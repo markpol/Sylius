@@ -10,10 +10,11 @@
  */
 
 return [
+    new Sylius\Bundle\ThemeBundle\Tests\Functional\Bundle\TestBundle\TestBundle(),
+
     new Symfony\Bundle\FrameworkBundle\FrameworkBundle(),
     new Symfony\Bundle\TwigBundle\TwigBundle(),
-
-    new Sylius\Bundle\ThemeBundle\Tests\Functional\Bundle\TestBundle\TestBundle(),
+    new \winzou\Bundle\StateMachineBundle\winzouStateMachineBundle(),
 
     new Sylius\Bundle\ThemeBundle\SyliusThemeBundle(),
 ];

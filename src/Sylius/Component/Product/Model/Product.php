@@ -13,12 +13,10 @@ namespace Sylius\Component\Product\Model;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Sylius\Component\Archetype\Model\ArchetypeInterface as BaseArchetypeInterface;
 use Sylius\Component\Attribute\Model\AttributeValueInterface as BaseAttributeValueInterface;
-use Sylius\Component\Resource\Model\SoftDeletableTrait;
 use Sylius\Component\Resource\Model\TimestampableTrait;
 use Sylius\Component\Resource\Model\ToggleableTrait;
-use Sylius\Component\Translation\Model\AbstractTranslatable;
+use Sylius\Component\Resource\Model\TranslatableTrait;
 use Sylius\Component\Variation\Model\OptionInterface as BaseOptionInterface;
 use Sylius\Component\Variation\Model\VariantInterface as BaseVariantInterface;
 
@@ -26,9 +24,12 @@ use Sylius\Component\Variation\Model\VariantInterface as BaseVariantInterface;
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  * @author Gonzalo Vilaseca <gvilaseca@reiss.co.uk>
  */
-class Product extends AbstractTranslatable implements ProductInterface
+class Product implements ProductInterface
 {
-    use SoftDeletableTrait, TimestampableTrait, ToggleableTrait;
+    use TimestampableTrait, ToggleableTrait;
+    use TranslatableTrait {
+        __construct as private initializeTranslationsCollection;
+    }
 
     /**
      * @var mixed
@@ -36,9 +37,9 @@ class Product extends AbstractTranslatable implements ProductInterface
     protected $id;
 
     /**
-     * @var null|BaseArchetypeInterface
+     * @var string
      */
-    protected $archetype;
+    protected $code;
 
     /**
      * @var \DateTime
@@ -72,7 +73,7 @@ class Product extends AbstractTranslatable implements ProductInterface
 
     public function __construct()
     {
-        parent::__construct();
+        $this->initializeTranslationsCollection();
 
         $this->availableOn = new \DateTime();
         $this->attributes = new ArrayCollection();
@@ -99,19 +100,19 @@ class Product extends AbstractTranslatable implements ProductInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @return string
      */
-    public function getArchetype()
+    public function getCode()
     {
-        return $this->archetype;
+        return $this->code;
     }
 
     /**
-     * {@inheritdoc}
+     * @param string $code
      */
-    public function setArchetype(BaseArchetypeInterface $archetype = null)
+    public function setCode($code)
     {
-        $this->archetype = $archetype;
+        $this->code = $code;
     }
 
     /**
@@ -313,33 +314,6 @@ class Product extends AbstractTranslatable implements ProductInterface
     /**
      * {@inheritdoc}
      */
-    public function getMasterVariant()
-    {
-        foreach ($this->variants as $variant) {
-            if ($variant->isMaster()) {
-                return $variant;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function setMasterVariant(BaseVariantInterface $masterVariant)
-    {
-        $masterVariant->setMaster(true);
-
-        if (!$this->variants->contains($masterVariant)) {
-            $masterVariant->setProduct($this);
-            $this->variants->add($masterVariant);
-        }
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function hasVariants()
     {
         return !$this->getVariants()->isEmpty();
@@ -350,9 +324,7 @@ class Product extends AbstractTranslatable implements ProductInterface
      */
     public function getVariants()
     {
-        return $this->variants->filter(function (BaseVariantInterface $variant) {
-            return !$variant->isDeleted() && !$variant->isMaster();
-        });
+        return $this->variants;
     }
 
     /**
@@ -361,7 +333,7 @@ class Product extends AbstractTranslatable implements ProductInterface
     public function getAvailableVariants()
     {
         return $this->variants->filter(function (BaseVariantInterface $variant) {
-            return !$variant->isDeleted() && !$variant->isMaster() && $variant->isAvailable();
+            return $variant->isAvailable();
         });
     }
 
@@ -462,20 +434,6 @@ class Product extends AbstractTranslatable implements ProductInterface
     /**
      * {@inheritdoc}
      */
-    public function setDeletedAt(\DateTime $deletedAt = null)
-    {
-        if (null === $deletedAt) {
-            foreach ($this->variants as $variant) {
-                $variant->setDeletedAt(null);
-            }
-        }
-
-        $this->deletedAt = $deletedAt;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function getAssociations()
     {
         return $this->associations;
@@ -509,5 +467,13 @@ class Product extends AbstractTranslatable implements ProductInterface
     public function hasAssociation(ProductAssociationInterface $association)
     {
         return $this->associations->contains($association);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSimple() 
+    {
+        return 1 === $this->variants->count() && !$this->hasOptions();
     }
 }

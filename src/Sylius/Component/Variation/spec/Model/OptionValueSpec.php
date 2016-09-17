@@ -13,12 +13,15 @@ namespace spec\Sylius\Component\Variation\Model;
 
 use PhpSpec\ObjectBehavior;
 use Sylius\Component\Variation\Model\OptionInterface;
+use Sylius\Component\Variation\Model\OptionValue;
 use Sylius\Component\Variation\Model\OptionValueInterface;
 
 /**
+ * @mixin OptionValue
+ *
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
-class OptionValueSpec extends ObjectBehavior
+final class OptionValueSpec extends ObjectBehavior
 {
     public function let()
     {
@@ -84,35 +87,35 @@ class OptionValueSpec extends ObjectBehavior
         $this->__toString()->shouldReturn('S');
     }
 
+    function it_throws_exception_when_trying_to_get_option_code_without_option_being_assigned()
+    {
+        $this
+            ->shouldThrow(\BadMethodCallException::class)
+            ->duringGetOptionCode()
+        ;
+    }
+
+    function it_returns_its_option_code(OptionInterface $option)
+    {
+        $option->getCode()->willReturn('01');
+        $this->setOption($option);
+
+        $this->getOptionCode()->shouldReturn('01');
+    }
+
     function it_throws_exception_when_trying_to_get_name_without_option_being_assigned()
     {
         $this
             ->shouldThrow(\BadMethodCallException::class)
-            ->duringGetName()
+            ->during('getName')
         ;
     }
 
     function it_returns_its_option_name(OptionInterface $option)
     {
-        $option->getName()->willReturn('T-Shirt size');
+        $option->getName()->willReturn('Size');
         $this->setOption($option);
 
-        $this->getName()->shouldReturn('T-Shirt size');
-    }
-
-    function it_throws_exception_when_trying_to_get_presentation_without_option_being_assigned()
-    {
-        $this
-            ->shouldThrow(\BadMethodCallException::class)
-            ->duringGetPresentation()
-        ;
-    }
-
-    function it_returns_its_option_presentation(OptionInterface $option)
-    {
-        $option->getPresentation()->willReturn('Size');
-        $this->setOption($option);
-
-        $this->getPresentation()->shouldReturn('Size');
+        $this->getName()->shouldReturn('Size');
     }
 }

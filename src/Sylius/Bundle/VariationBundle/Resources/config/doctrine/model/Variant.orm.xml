@@ -23,8 +23,9 @@
             <generator strategy="AUTO" />
         </id>
 
-        <field name="master" column="is_master" type="boolean" />
-        <field name="presentation" column="presentation" type="string" nullable="true" />
+        <field name="code" column="code" type="string" unique="true"  nullable="false"/>
+
+        <field name="name" column="name" type="string" nullable="true" />
 
         <field name="createdAt" column="created_at" type="datetime">
             <gedmo:timestampable on="create"/>
@@ -32,9 +33,6 @@
         <field name="updatedAt" column="updated_at" type="datetime" nullable="true">
             <gedmo:timestampable on="update"/>
         </field>
-        <field name="deletedAt" column="deleted_at" type="datetime" nullable="true" />
-
-        <gedmo:soft-deleteable field-name="deletedAt" />
     </mapped-superclass>
 
 </doctrine-mapping>

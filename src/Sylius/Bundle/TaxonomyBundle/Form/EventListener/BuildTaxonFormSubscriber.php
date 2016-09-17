@@ -18,22 +18,18 @@ use Symfony\Component\Form\FormEvents;
 use Symfony\Component\Form\FormFactoryInterface;
 
 /**
- * Adds the parent taxon field choice based on the selected taxonomy.
+ * Adds the parent taxon field choice.
  *
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
 class BuildTaxonFormSubscriber implements EventSubscriberInterface
 {
     /**
-     * Form factory.
-     *
      * @var FormFactoryInterface
      */
     private $factory;
 
     /**
-     * Constructor.
-     *
      * @param FormFactoryInterface $factory
      */
     public function __construct(FormFactoryInterface $factory)
@@ -48,7 +44,6 @@ class BuildTaxonFormSubscriber implements EventSubscriberInterface
     {
         return [
             FormEvents::PRE_SET_DATA => 'preSetData',
-            FormEvents::POST_SUBMIT => 'postSubmit',
         ];
     }
 
@@ -66,29 +61,12 @@ class BuildTaxonFormSubscriber implements EventSubscriberInterface
         }
 
         $event->getForm()->add($this->factory->createNamed('parent', 'sylius_taxon_choice', $taxon->getParent(), [
-            'taxonomy' => $taxon->getTaxonomy(),
             'filter' => $this->getFilterTaxonOption($taxon),
             'required' => false,
             'label' => 'sylius.form.taxon.parent',
             'empty_value' => '---',
             'auto_initialize' => false,
         ]));
-    }
-
-    /**
-     * Reset the taxon root if it's null.
-     *
-     * @param FormEvent $event
-     */
-    public function postSubmit(FormEvent $event)
-    {
-        $taxon = $event->getData();
-
-        $taxonomy = $taxon->getTaxonomy();
-
-        if (null === $taxon->getParent()) {
-            $taxon->setParent($taxonomy->getRoot());
-        }
     }
 
     /**

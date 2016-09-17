@@ -20,7 +20,7 @@ use Symfony\Component\DependencyInjection\Definition;
 /**
  * @author Mateusz Zalewski <mateusz.zalewski@lakion.com>
  */
-class RegisterAttributeFactoryPassSpec extends ObjectBehavior
+final class RegisterAttributeFactoryPassSpec extends ObjectBehavior
 {
     function it_is_initializable()
     {
@@ -56,5 +56,7 @@ class RegisterAttributeFactoryPassSpec extends ObjectBehavior
     {
         $container->hasDefinition('sylius.registry.attribute_type')->willReturn(false);
         $container->getDefinition('sylius.registry.attribute_type')->shouldNotBeCalled();
+
+        $this->process($container);
     }
 }

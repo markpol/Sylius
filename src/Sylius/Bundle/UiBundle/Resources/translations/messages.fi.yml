@@ -2,6 +2,28 @@
 # (c) Paweł Jędrzejewski
 
 sylius:
-  form:
-    login:
-      username: Käyttäjänimi
+    form:
+        login:
+            username: Käyttäjänimi
+    ui:
+        back: Edellinen
+        city: Kaupunki
+        company: Yritys
+        content: Sisältö
+        currency: Valuutta
+        email: Sähköpostiosoite
+        exchange_rate: Vaihtokurssi
+        label: Otsikko
+        members: Jäsenet
+        message: Viesti
+        next: Seuraava
+        "no": false
+        parent: Vanhempi
+        phone_number: Puhelinnumero
+        postcode: Postinumero
+        pricing: Hinnoittelu
+        province: Lääni
+        street: Katuosoite
+        topic: Aihe
+        username: Käyttäjänimi
+        "yes": true

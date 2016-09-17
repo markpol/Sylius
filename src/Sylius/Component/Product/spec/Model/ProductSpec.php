@@ -13,8 +13,8 @@ namespace spec\Sylius\Component\Product\Model;
 
 use Doctrine\Common\Collections\Collection;
 use PhpSpec\ObjectBehavior;
+use Prophecy\Argument;
 use Sylius\Component\Association\Model\AssociableInterface;
-use Sylius\Component\Product\Model\ArchetypeInterface;
 use Sylius\Component\Product\Model\AttributeValueInterface;
 use Sylius\Component\Product\Model\OptionInterface;
 use Sylius\Component\Product\Model\ProductAssociationInterface;
@@ -26,7 +26,7 @@ use Sylius\Component\Resource\Model\ToggleableInterface;
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  * @author Gonzalo Vilaseca <gvilaseca@reiss.co.uk>
  */
-class ProductSpec extends ObjectBehavior
+final class ProductSpec extends ObjectBehavior
 {
     public function let()
     {
@@ -57,17 +57,6 @@ class ProductSpec extends ObjectBehavior
     function it_has_no_id_by_default()
     {
         $this->getId()->shouldReturn(null);
-    }
-
-    function it_does_not_belong_to_any_archetype_by_default()
-    {
-        $this->getArchetype()->shouldReturn(null);
-    }
-
-    function it_can_belong_to_a_product_archetype(ArchetypeInterface $archetype)
-    {
-        $this->setArchetype($archetype);
-        $this->getArchetype()->shouldReturn($archetype);
     }
 
     function it_has_no_name_by_default()
@@ -160,52 +149,54 @@ class ProductSpec extends ObjectBehavior
         $this->hasAttribute($attribute)->shouldReturn(false);
     }
 
-    function it_should_not_have_master_variant_by_default()
-    {
-        $this->getMasterVariant()->shouldReturn(null);
-    }
-
-    function its_master_variant_should_be_mutable_and_define_given_variant_as_master(VariantInterface $variant)
-    {
-        $variant->setProduct($this)->shouldBeCalled();
-        $variant->setMaster(true)->shouldBeCalled();
-
-        $this->setMasterVariant($variant);
-    }
-
-    function it_should_not_add_master_variant_twice_to_collection(VariantInterface $variant)
-    {
-        $variant->isMaster()->willReturn(true);
-        $variant->isDeleted()->willReturn(false);
-
-        $variant->setProduct($this)->shouldBeCalled();
-        $variant->setMaster(true)->shouldBeCalled();
-
-        $this->setMasterVariant($variant);
-        $this->setMasterVariant($variant);
-
-        $this->hasVariants()->shouldReturn(false);
-    }
-
     function its_hasVariants_should_return_false_if_no_variants_defined()
     {
         $this->hasVariants()->shouldReturn(false);
     }
 
-    function its_hasVariants_should_return_true_only_if_any_variants_defined(VariantInterface $variant)
-    {
-        $variant->isMaster()->willReturn(false);
-        $variant->isDeleted()->willReturn(false);
+    function its_hasVariants_should_return_true_only_if_multiple_variants_are_defined(
+        VariantInterface $firstVariant,
+        VariantInterface $secondVariant
+    ) {
+        $firstVariant->setProduct($this)->shouldBeCalled();
+        $secondVariant->setProduct($this)->shouldBeCalled();
 
-        $variant->setProduct($this)->shouldBeCalled();
-
-        $this->addVariant($variant);
+        $this->addVariant($firstVariant);
+        $this->addVariant($secondVariant);
         $this->hasVariants()->shouldReturn(true);
     }
 
     function it_should_initialize_variants_collection_by_default()
     {
         $this->getVariants()->shouldHaveType('Doctrine\Common\Collections\Collection');
+        $this->getAvailableVariants()->shouldHaveType('Doctrine\Common\Collections\Collection');
+    }
+
+    function it_does_not_include_unavailable_variants_in_available_variants(VariantInterface $variant)
+    {
+        $variant->isAvailable()->willReturn(false);
+
+        $variant->setProduct($this)->shouldBeCalled();
+
+        $this->addVariant($variant);
+        $this->getAvailableVariants()->shouldHaveCount(0);
+    }
+
+    function it_returns_available_variants(
+        VariantInterface $unavailableVariant,
+        VariantInterface $variant
+    ) {
+        $unavailableVariant->isAvailable()->willReturn(false);
+        $variant->isAvailable()->willReturn(true);
+
+        $unavailableVariant->setProduct($this)->shouldBeCalled();
+        $variant->setProduct($this)->shouldBeCalled();
+
+        $this->addVariant($unavailableVariant);
+        $this->addVariant($variant);
+
+        $this->getAvailableVariants()->shouldHaveCount(1);
+        $this->getAvailableVariants()->first()->shouldReturn($variant);
     }
 
     function it_should_initialize_option_collection_by_default()
@@ -269,37 +260,6 @@ class ProductSpec extends ObjectBehavior
 
         $this->setUpdatedAt($date);
         $this->getUpdatedAt()->shouldReturn($date);
-    }
-
-    function it_has_no_deletion_date_by_default()
-    {
-        $this->getDeletedAt()->shouldReturn(null);
-    }
-
-    function it_is_not_be_deleted_by_default()
-    {
-        $this->shouldNotBeDeleted();
-    }
-
-    function its_deletion_date_is_mutable()
-    {
-        $deletedAt = new \DateTime();
-
-        $this->setDeletedAt($deletedAt);
-        $this->getDeletedAt()->shouldReturn($deletedAt);
-    }
-
-    function it_is_deleted_only_if_deletion_date_is_in_past()
-    {
-        $deletedAt = new \DateTime('yesterday');
-
-        $this->setDeletedAt($deletedAt);
-        $this->shouldBeDeleted();
-
-        $deletedAt = new \DateTime('tomorrow');
-
-        $this->setDeletedAt($deletedAt);
-        $this->shouldNotBeDeleted();
     }
 
     function it_is_enabled_by_default()

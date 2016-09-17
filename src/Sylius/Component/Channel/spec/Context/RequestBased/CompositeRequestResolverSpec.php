@@ -14,7 +14,7 @@ namespace spec\Sylius\Component\Channel\Context\RequestBased;
 use PhpSpec\ObjectBehavior;
 use Sylius\Component\Channel\Context\RequestBased\CompositeRequestResolver;
 use Sylius\Component\Channel\Context\RequestBased\RequestResolverInterface;
-use Sylius\Component\Core\Model\ChannelInterface;
+use Sylius\Component\Channel\Model\ChannelInterface;
 use Symfony\Component\HttpFoundation\Request;
 
 /**
@@ -22,7 +22,7 @@ use Symfony\Component\HttpFoundation\Request;
  *
  * @author Kamil Kokot <kamil.kokot@lakion.com>
  */
-class CompositeRequestResolverSpec extends ObjectBehavior
+final class CompositeRequestResolverSpec extends ObjectBehavior
 {
     function it_is_initializable()
     {

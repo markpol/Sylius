@@ -11,33 +11,52 @@
 
 namespace Sylius\Bundle\CoreBundle\Templating\Helper;
 
-use Sylius\Bundle\CurrencyBundle\Templating\Helper\MoneyHelper as BaseMoneyHelper;
-use Sylius\Component\Currency\Context\CurrencyContextInterface;
+use Sylius\Bundle\MoneyBundle\Templating\Helper\MoneyHelperInterface;
 use Sylius\Component\Locale\Context\LocaleContextInterface;
+use Symfony\Component\Templating\Helper\Helper;
 
-class MoneyHelper extends BaseMoneyHelper
+/**
+ * @author Łukasz Chruściel <lukasz.chrusciel@lakion.com>
+ */
+class MoneyHelper extends Helper implements MoneyHelperInterface
 {
+    /**
+     * @var MoneyHelperInterface
+     */
+    private $decoratedHelper;
+
     /**
      * @var LocaleContextInterface
      */
-    protected $localeContext;
+    private $localeContext;
 
     /**
-     * @param LocaleContextInterface   $localeContext
-     * @param CurrencyContextInterface $currencyContext
+     * @param MoneyHelperInterface $decoratedHelper
+     * @param LocaleContextInterface $localeContext
      */
-    public function __construct(LocaleContextInterface $localeContext, CurrencyContextInterface $currencyContext)
-    {
+    public function __construct(
+        MoneyHelperInterface $decoratedHelper,
+        LocaleContextInterface $localeContext
+    ) {
+        $this->decoratedHelper = $decoratedHelper;
         $this->localeContext = $localeContext;
-
-        parent::__construct($this->getDefaultLocale(), $currencyContext);
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function getDefaultLocale()
+    public function formatAmount($amount, $currencyCode = null, $locale = null)
     {
-        return $this->localeContext->getDefaultLocale();
+        $locale = $locale ?: $this->localeContext->getLocaleCode();
+
+        return $this->decoratedHelper->formatAmount($amount, $currencyCode, $locale);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getName()
+    {
+        return 'sylius_money';
     }
 }

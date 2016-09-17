@@ -22,7 +22,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  * @author Gonzalo Vilaseca <gvilaseca@reiss.co.uk>
  */
-class OptionTypeSpec extends ObjectBehavior
+final class OptionTypeSpec extends ObjectBehavior
 {
     function let()
     {
@@ -42,13 +42,7 @@ class OptionTypeSpec extends ObjectBehavior
     function it_builds_form_with_proper_fields(FormBuilder $builder)
     {
         $builder
-            ->add('name', 'text', Argument::any())
-            ->shouldBeCalled()
-            ->willReturn($builder)
-        ;
-
-        $builder
-            ->add('translations', 'a2lix_translationsForms', Argument::any())
+            ->add('translations', 'sylius_translations', Argument::any())
             ->shouldBeCalled()
             ->willReturn($builder)
         ;

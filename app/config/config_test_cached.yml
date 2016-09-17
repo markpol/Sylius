@@ -2,7 +2,7 @@
 # (c) Paweł Jędrzejewski
 
 imports:
-    - { resource: config_test.yml }
+    - { resource: "config_test.yml" }
 
 doctrine:
     orm:
@@ -19,3 +19,9 @@ doctrine_phpcr:
             type: memcached
             host: localhost
             port: 11211
+
+twig:
+    strict_variables: true
+
+sylius_channel:
+    debug: true

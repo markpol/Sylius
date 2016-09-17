@@ -14,9 +14,6 @@ namespace Sylius\Bundle\CoreBundle\Form\Type;
 use Sylius\Bundle\TaxonomyBundle\Form\Type\TaxonType as BaseTaxonType;
 use Symfony\Component\Form\FormBuilderInterface;
 
-/**
- * Taxon form type.
- */
 class TaxonType extends BaseTaxonType
 {
     /**
@@ -26,12 +23,14 @@ class TaxonType extends BaseTaxonType
     {
         parent::buildForm($builder, $options);
 
-        $builder->add(
-            'file',
-            'file',
-            [
-                'label' => 'sylius.form.taxon.file',
-            ]
-        );
+        $builder
+            ->add('images', 'collection', [
+                'type' => 'sylius_taxon_image',
+                'allow_add' => true,
+                'allow_delete' => true,
+                'by_reference' => false,
+                'label' => 'sylius.form.taxon.images',
+            ])
+        ;
     }
 }

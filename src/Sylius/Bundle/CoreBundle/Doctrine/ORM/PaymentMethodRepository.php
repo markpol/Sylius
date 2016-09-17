@@ -12,21 +12,34 @@
 namespace Sylius\Bundle\CoreBundle\Doctrine\ORM;
 
 use Sylius\Bundle\PaymentBundle\Doctrine\ORM\PaymentMethodRepository as BasePaymentMethodRepository;
+use Sylius\Component\Core\Model\ChannelInterface;
+use Sylius\Component\Core\Repository\PaymentMethodRepositoryInterface;
 
-class PaymentMethodRepository extends BasePaymentMethodRepository
+class PaymentMethodRepository extends BasePaymentMethodRepository implements PaymentMethodRepositoryInterface
 {
     /**
      * {@inheritdoc}
      */
-    public function getQueryBuilderForChoiceType(array $options)
+    public function createListQueryBuilder()
     {
-        $queryBuilder = parent::getQueryBuilderForChoiceType($options);
+        return $this
+            ->createQueryBuilder('o')
+            ->addSelect('translation')
+            ->leftJoin('o.translations', 'translation')
+        ;
+    }
 
-        if ($options['channel']) {
-            $queryBuilder->andWhere('method IN (:methods)')
-                ->setParameter('methods', $options['channel']->getPaymentMethods()->toArray());
-        }
-
-        return $queryBuilder;
+    /**
+     * {@inheritdoc}
+     */
+    public function findEnabledForChannel(ChannelInterface $channel)
+    {
+        return $this->createQueryBuilder('o')
+            ->where('o.enabled = true')
+            ->andWhere('o IN (:paymentMethodsInChannel)')
+            ->setParameter('paymentMethodsInChannel', $channel->getPaymentMethods()->toArray())
+            ->getQuery()
+            ->getResult()
+        ;
     }
 }

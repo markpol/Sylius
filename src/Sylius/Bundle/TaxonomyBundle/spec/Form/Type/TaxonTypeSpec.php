@@ -24,7 +24,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  * @author Gonzalo Vilaseca <gvilaseca@reiss.co.uk>
  */
-class TaxonTypeSpec extends ObjectBehavior
+final class TaxonTypeSpec extends ObjectBehavior
 {
     function let()
     {
@@ -58,7 +58,7 @@ class TaxonTypeSpec extends ObjectBehavior
         ;
 
         $builder
-            ->add('translations', 'a2lix_translationsForms', Argument::any())
+            ->add('translations', 'sylius_translations', Argument::any())
             ->shouldBeCalled()
             ->willReturn($builder)
         ;

@@ -98,7 +98,13 @@ class RequestConfiguration
      */
     public function getDefaultTemplate($name)
     {
-        return sprintf('%s:%s.%s', $this->metadata->getTemplatesNamespace() ?: ':', $name, 'twig');
+        $templatesNamespace = $this->metadata->getTemplatesNamespace();
+
+        if (false !== strpos($templatesNamespace, ':')) {
+            return sprintf('%s:%s.%s', $templatesNamespace ?: ':', $name, 'twig');
+        }
+
+        return sprintf('%s/%s.%s', $templatesNamespace, $name, 'twig');
     }
 
     /**
@@ -228,11 +234,15 @@ class RequestConfiguration
     {
         $redirect = $this->parameters->get('redirect');
 
-        if (!is_array($redirect) || empty($redirect['parameters'])) {
+        if ($this->areParametersIntentionallyEmptyArray($redirect)) {
+            return [];
+        }
+
+        if (!is_array($redirect)) {
             $redirect = ['parameters' => []];
         }
 
-        $parameters = $redirect['parameters'];
+        $parameters = isset($redirect['parameters']) ? $redirect['parameters'] : [];
 
         if (null !== $resource) {
             $parameters = $this->parseResourceValues($parameters, $resource);
@@ -459,11 +469,7 @@ class RequestConfiguration
      */
     public function hasPermission()
     {
-        if (!$this->parameters->has('permission')) {
-            return true;
-        }
-
-        return false !== $this->parameters->get('permission');
+        return false !== $this->parameters->get('permission', false);
     }
 
     /**
@@ -475,15 +481,17 @@ class RequestConfiguration
      */
     public function getPermission($name)
     {
-        if (!$this->hasPermission()) {
+        $permission = $this->parameters->get('permission');
+
+        if (null === $permission) {
             throw new \LogicException('Current action does not require any authorization.');
         }
 
-        if (!$this->parameters->has('permission')) {
+        if (true === $permission) {
             return sprintf('%s.%s.%s', $this->metadata->getApplicationName(), $this->metadata->getName(), $name);
         }
 
-        return $this->parameters->get('permission');
+        return $permission;
     }
 
     /**
@@ -502,6 +510,11 @@ class RequestConfiguration
         }
 
         return (bool) $redirect['header'];
+    }
+
+    public function getVars()
+    {
+        return $this->parameters->get('vars', []);
     }
 
     /**
@@ -529,5 +542,61 @@ class RequestConfiguration
         }
 
         return $parameters;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasGrid()
+    {
+        return $this->parameters->has('grid');
+    }
+
+    /**
+     * @return string
+     *
+     * @throws \LogicException
+     */
+    public function getGrid()
+    {
+        if (!$this->hasGrid()) {
+            throw new \LogicException('Current action does not use grid.');
+        }
+
+        return $this->parameters->get('grid');
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasStateMachine()
+    {
+        return $this->parameters->has('state_machine');
+    }
+
+    /**
+     * @return string
+     */
+    public function getStateMachineGraph()
+    {
+        return $this->parameters->get('state_machine[graph]', null, true);
+    }
+
+    /**
+     * @return string
+     */
+    public function getStateMachineTransition()
+    {
+        return $this->parameters->get('state_machine[transition]', null, true);
+    }
+
+    /**
+     * @param mixed $redirect
+     *
+     * @return bool
+     */
+    private function areParametersIntentionallyEmptyArray($redirect)
+    {
+        return isset($redirect['parameters']) && is_array($redirect['parameters']) && empty($redirect['parameters']);
     }
 }

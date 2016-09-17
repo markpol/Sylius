@@ -16,8 +16,6 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Validator\Constraints\NotBlank;
 
 /**
- * Order form type for api creation.
- *
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
 class OrderType extends BaseOrderType
@@ -28,12 +26,8 @@ class OrderType extends BaseOrderType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
-            ->add('user', 'sylius_customer_choice', [
-                'constraints' => [
-                    new NotBlank(),
-                ],
-            ])
-            ->add('currency', 'sylius_currency_code_choice', [
+            ->add('customer', 'sylius_customer_choice')
+            ->add('currencyCode', 'sylius_currency_code_choice', [
                 'constraints' => [
                     new NotBlank(),
                 ],

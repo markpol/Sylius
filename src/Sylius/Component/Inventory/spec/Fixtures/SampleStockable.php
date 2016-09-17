@@ -21,14 +21,6 @@ class SampleStockable implements StockableInterface
     /**
      * {@inheritdoc}
      */
-    public function getSku()
-    {
-        return 'SHIRT-485-LARGE-GREEN';
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function getInventoryName()
     {
         return 'Shirt model number 485 Green L';
@@ -40,14 +32,6 @@ class SampleStockable implements StockableInterface
     public function isInStock()
     {
         return true;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function isAvailableOnDemand()
-    {
-        return false;
     }
 
     /**
@@ -78,5 +62,20 @@ class SampleStockable implements StockableInterface
      */
     public function setOnHand($onHand)
     {
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setTracked($tracked)
+    {
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function isTracked()
+    {
+        return true;
     }
 }

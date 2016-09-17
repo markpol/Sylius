@@ -12,6 +12,7 @@
 namespace Sylius\Bundle\PaymentBundle\DependencyInjection;
 
 use Sylius\Bundle\PaymentBundle\Form\Type\CreditCardType;
+use Sylius\Bundle\PaymentBundle\Form\Type\PaymentMethodChoiceType;
 use Sylius\Bundle\PaymentBundle\Form\Type\PaymentMethodTranslationType;
 use Sylius\Bundle\PaymentBundle\Form\Type\PaymentMethodType;
 use Sylius\Bundle\PaymentBundle\Form\Type\PaymentType;
@@ -28,7 +29,7 @@ use Sylius\Component\Payment\Model\PaymentMethodInterface;
 use Sylius\Component\Payment\Model\PaymentMethodTranslation;
 use Sylius\Component\Payment\Model\PaymentMethodTranslationInterface;
 use Sylius\Component\Resource\Factory\Factory;
-use Sylius\Component\Translation\Factory\TranslatableFactory;
+use Sylius\Component\Resource\Factory\TranslatableFactory;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
@@ -93,7 +94,7 @@ class Configuration implements ConfigurationInterface
                                             ->addDefaultsIfNotSet()
                                             ->children()
                                                 ->scalarNode('default')->defaultValue(PaymentMethodType::class)->cannotBeEmpty()->end()
-                                                ->scalarNode('choice')->defaultValue(ResourceChoiceType::class)->cannotBeEmpty()->end()
+                                                ->scalarNode('choice')->defaultValue(PaymentMethodChoiceType::class)->cannotBeEmpty()->end()
                                             ->end()
                                         ->end()
                                     ->end()
@@ -136,10 +137,6 @@ class Configuration implements ConfigurationInterface
                                                     ->defaultValue(['sylius'])
                                                 ->end()
                                             ->end()
-                                        ->end()
-                                        ->arrayNode('fields')
-                                            ->prototype('scalar')->end()
-                                            ->defaultValue(['name', 'description'])
                                         ->end()
                                     ->end()
                                 ->end()

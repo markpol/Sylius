@@ -20,7 +20,7 @@ use Prophecy\Argument;
 /**
  * @author Adam Elsodaney <adam.elso@gmail.com>
  */
-class LoadMetadataSubscriberSpec extends ObjectBehavior
+final class LoadMetadataSubscriberSpec extends ObjectBehavior
 {
     function let()
     {
@@ -143,6 +143,7 @@ class LoadMetadataSubscriberSpec extends ObjectBehavior
             'fieldName' => 'values',
             'targetEntity' => 'Some\App\Product\Entity\OptionValue',
             'mappedBy' => 'option',
+            'orphanRemoval' => true,
             'cascade' => ['all'],
         ];
 

@@ -15,15 +15,18 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Sylius\Component\Resource\Model\TimestampableTrait;
 use Sylius\Component\Resource\Model\ToggleableTrait;
-use Sylius\Component\Translation\Model\AbstractTranslatable;
+use Sylius\Component\Resource\Model\TranslatableTrait;
 
 /**
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  * @author Gonzalo Vilaseca <gvilaseca@reiss.co.uk>
  */
-class ShippingMethod extends AbstractTranslatable implements ShippingMethodInterface
+class ShippingMethod implements ShippingMethodInterface
 {
     use TimestampableTrait, ToggleableTrait;
+    use TranslatableTrait {
+        __construct as private initializeTranslationsCollection;
+    }
 
     /**
      * @var mixed
@@ -57,14 +60,9 @@ class ShippingMethod extends AbstractTranslatable implements ShippingMethodInter
      */
     protected $configuration = [];
 
-    /**
-     * @var Collection|RuleInterface[]
-     */
-    protected $rules;
-
     public function __construct()
     {
-        parent::__construct();
+        $this->initializeTranslationsCollection();
 
         $this->rules = new ArrayCollection();
         $this->createdAt = new \DateTime();
@@ -161,6 +159,22 @@ class ShippingMethod extends AbstractTranslatable implements ShippingMethodInter
     /**
      * {@inheritdoc}
      */
+    public function getDescription()
+    {
+        return $this->translate()->getDescription();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setDescription($description)
+    {
+        $this->translate()->setDescription($description);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function getCalculator()
     {
         return $this->calculator;
@@ -191,42 +205,6 @@ class ShippingMethod extends AbstractTranslatable implements ShippingMethodInter
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public function getRules()
-    {
-        return $this->rules;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function hasRule(RuleInterface $rule)
-    {
-        return $this->rules->contains($rule);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function addRule(RuleInterface $rule)
-    {
-        if (!$this->hasRule($rule)) {
-            $rule->setMethod($this);
-            $this->rules->add($rule);
-        }
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function removeRule(RuleInterface $rule)
-    {
-        $rule->setMethod(null);
-        $this->rules->removeElement($rule);
-    }
-
-    /**
      * @return array
      */
     public static function getCategoryRequirementLabels()
@@ -236,15 +214,5 @@ class ShippingMethod extends AbstractTranslatable implements ShippingMethodInter
             ShippingMethodInterface::CATEGORY_REQUIREMENT_MATCH_ANY => 'At least 1 unit has to match the method category',
             ShippingMethodInterface::CATEGORY_REQUIREMENT_MATCH_ALL => 'All units has to match the method category',
         ];
-    }
-
-    public function enable()
-    {
-        $this->enabled = true;
-    }
-
-    public function disable()
-    {
-        $this->enabled = false;
     }
 }

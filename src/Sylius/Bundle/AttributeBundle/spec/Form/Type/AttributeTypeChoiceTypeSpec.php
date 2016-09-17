@@ -18,7 +18,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 /**
  * @author Mateusz Zalewski <mateusz.zalewski@lakion.com>
  */
-class AttributeTypeChoiceTypeSpec extends ObjectBehavior
+final class AttributeTypeChoiceTypeSpec extends ObjectBehavior
 {
     function let()
     {
@@ -37,7 +37,10 @@ class AttributeTypeChoiceTypeSpec extends ObjectBehavior
 
     function it_configures_proper_options(OptionsResolver $resolver)
     {
-        $resolver->setDefaults(['choices' => ['test' => 'Test attribute type']])->shouldBeCalled();
+        $resolver->setDefaults([
+            'choice_translation_domain' => false,
+            'choices' => ['test' => 'Test attribute type']
+        ])->shouldBeCalled();
 
         $this->configureOptions($resolver);
     }

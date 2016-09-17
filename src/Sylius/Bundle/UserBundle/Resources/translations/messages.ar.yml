@@ -2,14 +2,8 @@
 # (c) Paweł Jędrzejewski
 
 sylius:
-  form:
-    group:
-      name: الاسم
-    user:
-      email: البريد الإلكتروني
-      password:
-        label: كلمة السر
-    customer:
-      first_name: الاسم الأول
-      last_name: اسم العائلة
-      email: البريد الإلكتروني
+    form:
+        user:
+            email: البريد الإلكتروني
+            password:
+                label: كلمة السر

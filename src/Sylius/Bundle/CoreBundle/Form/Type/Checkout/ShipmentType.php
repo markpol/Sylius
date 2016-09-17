@@ -21,19 +21,21 @@ use Symfony\Component\Translation\TranslatorInterface;
 use Symfony\Component\Validator\Constraints\NotBlank;
 
 /**
- * Order shipments type.
- *
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
 class ShipmentType extends AbstractType
 {
+    /**
+     * @var string
+     */
     protected $dataClass;
-    protected $translator;
 
-    public function __construct($dataClass, TranslatorInterface $translator)
+    /**
+     * @param string $dataClass
+     */
+    public function __construct($dataClass)
     {
         $this->dataClass = $dataClass;
-        $this->translator = $translator;
     }
 
     /**
@@ -41,25 +43,16 @@ class ShipmentType extends AbstractType
      */
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        $criteria = $options['criteria'];
-        $channel = $options['channel'];
-
-        $notBlank = new NotBlank(['groups' => ['sylius']]);
-        $notBlank->message = $this->translator->trans('sylius.checkout.shipping_method.not_blank', [], 'validators');
-
         $builder
-            ->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) use ($notBlank, $criteria, $channel) {
+            ->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) {
                 $form = $event->getForm();
                 $shipment = $event->getData();
 
                 $form->add('method', 'sylius_shipping_method_choice', [
+                    'required' => true,
                     'label' => 'sylius.form.checkout.shipping_method',
                     'subject' => $shipment,
-                    'criteria' => $criteria,
                     'expanded' => true,
-                    'constraints' => [
-                        $notBlank,
-                    ],
                 ]);
             });
     }
@@ -73,12 +66,6 @@ class ShipmentType extends AbstractType
             ->setDefaults([
                 'data_class' => $this->dataClass,
             ])
-            ->setDefined([
-                'criteria',
-                'channel',
-            ])
-            ->setAllowedTypes('criteria', 'array')
-            ->setAllowedTypes('channel', [ChannelInterface::class, 'null'])
         ;
     }
 

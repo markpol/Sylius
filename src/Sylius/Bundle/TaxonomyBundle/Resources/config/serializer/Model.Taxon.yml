@@ -9,18 +9,11 @@ Sylius\Component\Taxonomy\Model\Taxon:
         code:
             expose: true
             type: string
-        name:
-            expose: true
-            type: string
         path:
             expose: true
             type: string
         children:
             expose: true
-    relations:
-        - rel: self
-          href:
-                route: sylius_api_taxon_show
-                parameters:
-                    taxonomyId: expr(object.getTaxonomy().getId())
-                    id: expr(object.getId())
+    virtual_properties:
+        getName:
+            serialized_name: name

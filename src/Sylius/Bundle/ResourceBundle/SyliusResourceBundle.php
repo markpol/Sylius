@@ -11,7 +11,7 @@
 
 namespace Sylius\Bundle\ResourceBundle;
 
-use Sylius\Bundle\ResourceBundle\DependencyInjection\Compiler\ObjectToIdentifierServicePass;
+use Sylius\Bundle\ResourceBundle\DependencyInjection\Compiler\DoctrineTargetEntitiesResolverPass;
 use Sylius\Bundle\ResourceBundle\DependencyInjection\Compiler\RegisterResourcesPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
@@ -19,7 +19,7 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
 /**
  * Resource bundle.
  *
- * @author Paweł Jędrzejewski <pjedrzejewski@sylius.pl>
+ * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
 class SyliusResourceBundle extends Bundle
 {
@@ -34,6 +34,6 @@ class SyliusResourceBundle extends Bundle
     public function build(ContainerBuilder $container)
     {
         $container->addCompilerPass(new RegisterResourcesPass());
-        $container->addCompilerPass(new ObjectToIdentifierServicePass());
+        $container->addCompilerPass(new DoctrineTargetEntitiesResolverPass());
     }
 }

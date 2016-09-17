@@ -2,10 +2,10 @@
 # (c) Paweł Jędrzejewski
 
 sylius:
-  form:
-    group:
-      name: Ime
-    user_change_password:
-      confirmation: Potvrda
-    user_reset_password:
-      confirmation: Potvrda
+    form:
+        user:
+            username: Krosnicko ime
+        user_change_password:
+            confirmation: Potvrda
+        user_reset_password:
+            confirmation: Potvrda

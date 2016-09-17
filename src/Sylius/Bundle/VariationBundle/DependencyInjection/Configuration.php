@@ -13,6 +13,7 @@ namespace Sylius\Bundle\VariationBundle\DependencyInjection;
 
 use Sylius\Bundle\ResourceBundle\Controller\ResourceController;
 use Sylius\Bundle\ResourceBundle\Form\Type\ResourceChoiceType;
+use Sylius\Bundle\ResourceBundle\Form\Type\ResourceFromIdentifierType;
 use Sylius\Bundle\ResourceBundle\SyliusResourceBundle;
 use Sylius\Bundle\VariationBundle\Form\Type\OptionTranslationType;
 use Sylius\Bundle\VariationBundle\Form\Type\OptionType;
@@ -22,7 +23,7 @@ use Sylius\Bundle\VariationBundle\Form\Type\VariantType;
 use Sylius\Component\Product\Model\OptionValueTranslation;
 use Sylius\Component\Product\Model\OptionValueTranslationInterface;
 use Sylius\Component\Resource\Factory\Factory;
-use Sylius\Component\Translation\Factory\TranslatableFactory;
+use Sylius\Component\Resource\Factory\TranslatableFactory;
 use Sylius\Component\Variation\Model\OptionTranslation;
 use Sylius\Component\Variation\Model\OptionTranslationInterface;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
@@ -88,6 +89,7 @@ class Configuration implements ConfigurationInterface
                                                 ->addDefaultsIfNotSet()
                                                 ->children()
                                                     ->scalarNode('default')->defaultValue(VariantType::class)->cannotBeEmpty()->end()
+                                                    ->scalarNode('from_identifier')->defaultValue(ResourceFromIdentifierType::class)->cannotBeEmpty()->end()
                                                 ->end()
                                             ->end()
                                         ->end()
@@ -96,6 +98,11 @@ class Configuration implements ConfigurationInterface
                                         ->addDefaultsIfNotSet()
                                         ->children()
                                             ->arrayNode('default')
+                                                ->prototype('scalar')->end()
+                                                ->defaultValue(['sylius'])
+                                                ->cannotBeEmpty()
+                                            ->end()
+                                            ->arrayNode('from_identifier')
                                                 ->prototype('scalar')->end()
                                                 ->defaultValue(['sylius'])
                                                 ->cannotBeEmpty()
@@ -167,10 +174,6 @@ class Configuration implements ConfigurationInterface
                                                     ->end()
                                                 ->end()
                                             ->end()
-                                            ->arrayNode('fields')
-                                                ->prototype('scalar')->end()
-                                                ->defaultValue(['presentation'])
-                                            ->end()
                                         ->end()
                                     ->end()
                                 ->end()
@@ -232,13 +235,9 @@ class Configuration implements ConfigurationInterface
                                                 ->children()
                                                     ->arrayNode('default')
                                                         ->prototype('scalar')->end()
-                                                        ->defaultValue(array('sylius'))
+                                                        ->defaultValue(['sylius'])
                                                     ->end()
                                                 ->end()
-                                            ->end()
-                                            ->arrayNode('fields')
-                                                ->prototype('scalar')->end()
-                                                ->defaultValue(array('value'))
                                             ->end()
                                         ->end()
                                     ->end()

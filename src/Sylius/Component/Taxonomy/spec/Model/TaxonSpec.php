@@ -13,13 +13,12 @@ namespace spec\Sylius\Component\Taxonomy\Model;
 
 use PhpSpec\ObjectBehavior;
 use Sylius\Component\Taxonomy\Model\TaxonInterface;
-use Sylius\Component\Taxonomy\Model\TaxonomyInterface;
 
 /**
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  * @author Gonzalo Vilaseca <gvilaseca@reiss.co.uk>
  */
-class TaxonSpec extends ObjectBehavior
+final class TaxonSpec extends ObjectBehavior
 {
     public function let()
     {
@@ -48,30 +47,6 @@ class TaxonSpec extends ObjectBehavior
         $this->getCode()->shouldReturn('TX2');
     }
 
-    function it_does_not_belong_to_taxonomy_by_default()
-    {
-        $this->getTaxonomy()->shouldReturn(null);
-    }
-
-    function it_allows_assigning_itself_to_taxonomy(TaxonomyInterface $taxonomy, TaxonInterface $root)
-    {
-        $taxonomy->getRoot()->willReturn($root);
-
-        $this->setTaxonomy($taxonomy);
-        $this->getTaxonomy()->shouldReturn($taxonomy);
-    }
-
-    function it_allows_detaching_itself_from_taxonomy(TaxonomyInterface $taxonomy, TaxonInterface $root)
-    {
-        $taxonomy->getRoot()->willReturn($root);
-
-        $this->setTaxonomy($taxonomy);
-        $this->getTaxonomy()->shouldReturn($taxonomy);
-
-        $this->setTaxonomy(null);
-        $this->getTaxonomy()->shouldReturn(null);
-    }
-
     function it_has_no_parent_by_default()
     {
         $this->getParent()->shouldReturn(null);
@@ -81,6 +56,30 @@ class TaxonSpec extends ObjectBehavior
     {
         $this->setParent($taxon);
         $this->getParent()->shouldReturn($taxon);
+    }
+
+    function it_returns_an_array_of_all_parent_taxons(
+        TaxonInterface $categoryTaxon,
+        TaxonInterface $tshirtsTaxon
+    ) {
+        $categoryTaxon->getParent()->willReturn(null);
+        $tshirtsTaxon->getParent()->willReturn($categoryTaxon);
+        $this->setParent($tshirtsTaxon);
+        
+        $this->getParents()->shouldReturn([$tshirtsTaxon, $categoryTaxon]);
+    }
+
+    function it_returns_an_array_of_with_a_single_parent_taxon(TaxonInterface $parentTaxon)
+    {
+        $parentTaxon->getParent()->willReturn(null);
+        $this->setParent($parentTaxon);
+
+        $this->getParents()->shouldReturn([$parentTaxon]);
+    }
+
+    function it_returns_empty_array_for_root_taxon()
+    {
+        $this->getParents()->shouldReturn([]);
     }
 
     function it_is_root_by_default()
@@ -165,26 +164,19 @@ class TaxonSpec extends ObjectBehavior
         $this->hasChild($taxon)->shouldReturn(false);
     }
 
-    function it_allows_to_add_child_taxons(TaxonomyInterface $taxonomy, TaxonInterface $taxon)
+    function it_allows_to_add_child_taxons(TaxonInterface $taxon)
     {
-        $this->setTaxonomy($taxonomy);
-
-        $taxon->setTaxonomy($taxonomy)->shouldBeCalled();
         $taxon->setParent($this)->shouldBeCalled();
 
         $this->addChild($taxon);
     }
 
-    function it_allows_to_remove_child_taxons(TaxonomyInterface $taxonomy, TaxonInterface $taxon)
+    function it_allows_to_remove_child_taxons(TaxonInterface $taxon)
     {
-        $this->setTaxonomy($taxonomy);
-
-        $taxon->setTaxonomy($taxonomy)->shouldBeCalled();
         $taxon->setParent($this)->shouldBeCalled();
 
         $this->addChild($taxon);
 
-        $taxon->setTaxonomy(null)->shouldBeCalled();
         $taxon->setParent(null)->shouldBeCalled();
 
         $this->removeChild($taxon);

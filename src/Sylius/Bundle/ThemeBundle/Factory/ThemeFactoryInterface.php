@@ -19,11 +19,10 @@ use Sylius\Bundle\ThemeBundle\Model\ThemeInterface;
 interface ThemeFactoryInterface
 {
     /**
-     * @param array $themeData
+     * @param string $name
+     * @param string $path
      *
      * @return ThemeInterface
-     *
-     * @throws \InvalidArgumentException If factory is unable to create theme instance out of given data
      */
-    public function createFromArray(array $themeData);
+    public function create($name, $path);
 }

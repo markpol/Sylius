@@ -11,30 +11,57 @@
 
 namespace Sylius\Bundle\PaymentBundle\Doctrine\ORM;
 
-use Sylius\Bundle\TranslationBundle\Doctrine\ORM\TranslatableResourceRepository;
+use Sylius\Bundle\ResourceBundle\Doctrine\ORM\EntityRepository;
 use Sylius\Component\Payment\Repository\PaymentMethodRepositoryInterface;
 
 /**
  * @author Arnaud Langlade <arn0d.dev@gmail.com>
  */
-class PaymentMethodRepository extends TranslatableResourceRepository implements PaymentMethodRepositoryInterface
+class PaymentMethodRepository extends EntityRepository implements PaymentMethodRepositoryInterface
 {
     /**
      * {@inheritdoc}
      */
-    public function getQueryBuilderForChoiceType(array $options)
+    public function findByName(array $names)
     {
-        $queryBuilder = $this->getCollectionQueryBuilder();
-
-        if (isset($options['disabled']) && !$options['disabled']) {
-            $queryBuilder->where('method.enabled = true');
-        }
-
-        return $queryBuilder;
+        return $this->createQueryBuilder('o')
+            ->addSelect('translation')
+            ->leftJoin('o.translations', 'translation')
+            ->where('translation.name = :name')
+            ->setParameter('name', $names)
+            ->getQuery()
+            ->getResult()
+        ;
     }
 
-    protected function getAlias()
+    /**
+     * {@inheritdoc}
+     */
+    public function findOneByName($name)
     {
-        return 'method';
+        return $this->createQueryBuilder('o')
+            ->addSelect('translation')
+            ->leftJoin('o.translations', 'translation')
+            ->where('translation.name = :name')
+            ->setParameter('name', $name)
+            ->getQuery()
+            ->getOneOrNullResult()
+        ;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function createPaginator(array $criteria = [], array $sorting = [])
+    {
+        $queryBuilder = $this->createQueryBuilder('o')
+            ->addSelect('translation')
+            ->leftJoin('o.translations', 'translation')
+        ;
+
+        $this->applyCriteria($queryBuilder, $criteria);
+        $this->applySorting($queryBuilder, $sorting);
+
+        return $this->getPaginator($queryBuilder);
     }
 }

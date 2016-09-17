@@ -11,9 +11,13 @@
 
 namespace Sylius\Bundle\ThemeBundle;
 
-use Sylius\Bundle\ThemeBundle\DependencyInjection\Compiler\ThemeRepositoryPass;
-use Sylius\Bundle\ThemeBundle\Translation\DependencyInjection\Compiler\ThemeAwareLoaderDecoratorPass;
-use Sylius\Bundle\ThemeBundle\Translation\DependencyInjection\Compiler\ThemeAwareSourcesPass;
+use Sylius\Bundle\ThemeBundle\Configuration\Filesystem\FilesystemConfigurationSourceFactory;
+use Sylius\Bundle\ThemeBundle\Configuration\Test\TestConfigurationSourceFactory;
+use Sylius\Bundle\ThemeBundle\DependencyInjection\SyliusThemeExtension;
+use Sylius\Bundle\ThemeBundle\Translation\DependencyInjection\Compiler\TranslatorAliasingPass;
+use Sylius\Bundle\ThemeBundle\Translation\DependencyInjection\Compiler\TranslatorFallbackLocalesPass;
+use Sylius\Bundle\ThemeBundle\Translation\DependencyInjection\Compiler\TranslatorLoaderProviderPass;
+use Sylius\Bundle\ThemeBundle\Translation\DependencyInjection\Compiler\TranslatorResourceProviderPass;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpKernel\Bundle\Bundle;
 
@@ -23,14 +27,18 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
 class SyliusThemeBundle extends Bundle
 {
     /**
-     * @param ContainerBuilder $container
+     * {@inheritdoc}
      */
     public function build(ContainerBuilder $container)
     {
-        parent::build($container);
+        /** @var SyliusThemeExtension $themeExtension */
+        $themeExtension = $container->getExtension('sylius_theme');
+        $themeExtension->addConfigurationSourceFactory(new FilesystemConfigurationSourceFactory());
+        $themeExtension->addConfigurationSourceFactory(new TestConfigurationSourceFactory());
 
-        $container->addCompilerPass(new ThemeRepositoryPass());
-        $container->addCompilerPass(new ThemeAwareSourcesPass());
-        $container->addCompilerPass(new ThemeAwareLoaderDecoratorPass());
+        $container->addCompilerPass(new TranslatorAliasingPass());
+        $container->addCompilerPass(new TranslatorFallbackLocalesPass());
+        $container->addCompilerPass(new TranslatorLoaderProviderPass());
+        $container->addCompilerPass(new TranslatorResourceProviderPass());
     }
 }

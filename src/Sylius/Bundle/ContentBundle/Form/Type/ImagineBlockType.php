@@ -18,7 +18,7 @@ use Symfony\Component\Form\FormBuilderInterface;
 /**
  * Imagine block type.
  *
- * @author Paweł Jędrzejewski <pjedrzejewski@diweb.pl>
+ * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
 class ImagineBlockType extends AbstractResourceType
 {
@@ -38,8 +38,6 @@ class ImagineBlockType extends AbstractResourceType
     protected $filterConfiguration;
 
     /**
-     * ImagineBlockType constructor.
-     *
      * @param string $dataClass
      * @param array $validationGroups
      * @param FilterConfiguration $filterConfiguration

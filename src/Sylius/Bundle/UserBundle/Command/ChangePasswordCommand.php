@@ -32,10 +32,10 @@ class ChangePasswordCommand extends ContainerAwareCommand
         $this
             ->setName('sylius:user:change-password')
             ->setDescription('Change the password of a user.')
-            ->setDefinition(array(
+            ->setDefinition([
                 new InputArgument('email', InputArgument::REQUIRED, 'The email'),
                 new InputArgument('password', InputArgument::REQUIRED, 'The password'),
-            ))
+            ])
             ->setHelp(<<<EOT
 The <info>sylius:user:change-password</info> command changes the password of a user:
   <info>php app/console sylius:user:change-password matthieu@email.com</info>
@@ -118,7 +118,7 @@ EOT
      */
     protected function getEntityManager()
     {
-        return $this->getContainer()->get('sylius.manager.user');
+        return $this->getContainer()->get('sylius.manager.shop_user');
     }
 
     /**
@@ -126,6 +126,6 @@ EOT
      */
     protected function getUserRepository()
     {
-        return $this->getContainer()->get('sylius.repository.user');
+        return $this->getContainer()->get('sylius.repository.shop_user');
     }
 }

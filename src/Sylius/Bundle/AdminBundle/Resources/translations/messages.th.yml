@@ -2,8 +2,36 @@
 # (c) Paweł Jędrzejewski
 
 sylius:
-  menu:
-    admin:
-      main:
-        configuration:
-          header: ตั้งค่าคอนฟิก
+    menu:
+        admin:
+            main:
+                catalog:
+                    attributes: คุณสมบัติ
+                    header: แค็ตตาล็อก
+                    options: ตัวเลือกสินค้า
+                    products: สินค้า
+                    taxons: การจัดหมวดหมู่
+                configuration:
+                    channels: ช่องทางจำหน่าย
+                    countries: ประเทศ
+                    currencies: สกุลเงิน
+                    header: การกำหนดค่า
+                    locales: ภาษา
+                    payment_methods: วิธีการชำระเงิน
+                    shipping_methods: วิธีการจัดส่ง
+                    tax_categories: ประเภทภาษี
+                    tax_rates: อัตราภาษี
+                    zones: โซน
+                marketing:
+                    header: การตลาด
+                    promotions: โปรโมชั่น
+                customers:
+                    customers: ลูกค้า
+                    header: ลูกค้า
+                sales:
+                    header: ยอดขาย
+                    orders: ใบสั่งซื้อ
+                content:
+                    header: เนื้อหา
+                    static_contents: Static contents
+                    routes: Routes

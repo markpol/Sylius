@@ -11,8 +11,7 @@
 
 namespace Sylius\Bundle\ThemeBundle\Factory;
 
-use Sylius\Bundle\ThemeBundle\Model\ThemeInterface;
-use Sylius\Component\Resource\Factory\FactoryInterface;
+use Sylius\Bundle\ThemeBundle\Model\Theme;
 
 /**
  * @author Kamil Kokot <kamil.kokot@lakion.com>
@@ -20,45 +19,10 @@ use Sylius\Component\Resource\Factory\FactoryInterface;
 final class ThemeFactory implements ThemeFactoryInterface
 {
     /**
-     * @var FactoryInterface
-     */
-    private $basicThemeFactory;
-
-    /**
-     * @param FactoryInterface $basicThemeFactory
-     */
-    public function __construct(FactoryInterface $basicThemeFactory)
-    {
-        $this->basicThemeFactory = $basicThemeFactory;
-    }
-
-    /**
      * {@inheritdoc}
      */
-    public function createFromArray(array $themeData)
+    public function create($name, $path)
     {
-        /** @var ThemeInterface $theme */
-        $theme = $this->basicThemeFactory->createNew();
-
-        $theme->setName($themeData['name']);
-        $theme->setPath($themeData['path']);
-
-        if (isset($themeData['authors'])) {
-            $theme->setAuthors($themeData['authors']);
-        }
-
-        if (isset($themeData['title'])) {
-            $theme->setTitle($themeData['title']);
-        }
-
-        if (isset($themeData['description'])) {
-            $theme->setDescription($themeData['description']);
-        }
-
-        if (isset($themeData['parents'])) {
-            $theme->setParentsNames($themeData['parents']);
-        }
-
-        return $theme;
+        return new Theme($name, $path);
     }
 }

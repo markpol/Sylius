@@ -19,7 +19,7 @@ use Symfony\Component\Form\FormBuilder;
 /**
  * @author Saša Stamenković <umpirsky@gmail.com>
  */
-class ItemTotalConfigurationTypeSpec extends ObjectBehavior
+final class ItemTotalConfigurationTypeSpec extends ObjectBehavior
 {
     function it_is_initializable()
     {
@@ -35,11 +35,6 @@ class ItemTotalConfigurationTypeSpec extends ObjectBehavior
     {
         $builder
             ->add('amount', 'sylius_money', Argument::any())
-            ->willReturn($builder)
-        ;
-
-        $builder
-            ->add('equal', 'checkbox', Argument::any())
             ->willReturn($builder)
         ;
 

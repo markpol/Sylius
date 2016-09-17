@@ -1,7 +1,165 @@
 UPGRADE
 =======
 
+## From 0.19 to 1.0.0-alpha
+
+### WebBundle
+ 
+ * Removed ``WebBundle``. See ``ShopBundle`` for the website and ``AdminBundle`` for administration-related.
+ 
+  See https://github.com/Sylius/Sylius/pull/5535 and https://github.com/Sylius/Sylius/pull/5655
+
+### Removed Assetic
+
+ * Sylius is no longer using Assetic for assets management - see https://github.com/Sylius/Sylius/pull/5593
+ * Gulp and NPM are now responsible to compile the new UI
+
+### Archetype and ArchetypeBundle
+
+* Removed ``Archetype`` component and ``ArchetypeBundle``
+
+### ChannelBundle
+
+* Renamed configuration option `sylius_channel.fake_channel_support` to `sylius_channel.debug`
+
+### Contact and ContactBundle
+
+* Removed ``Contact`` component and ``ContactBundle``
+
+### Order and OrderBundle
+
+* Added ``OrderSequence`` model to keep current order index
+* Added ``OrderNumberGenerator`` to generate number for new orders
+
+### Report and ReportBundle
+
+* Removed ``Report`` component and ``ReportBundle``
+
+### Sequence and SequenceBundle
+
+* Removed ``Sequence`` component and ``SequenceBundle``
+
+### SearchBundle
+
+* Removed ``SearchBundle``
+
+## From 0.18 to 0.19.x
+
+### Core and CoreBundle
+
+* Introduced new adjustments type ``ORDER_UNIT_PROMOTION``
+* Changed current *item* promotion actions to *unit* promotion actions (as they're applied on ``OrderItemUnit`` level)
+* Introduced ``getDiscountedUnitPrice`` method on ``OrderItem``, which returns single *unit* price lowered by ``ORDER_UNIT_PROMOTION`` adjustments
+* Removed the concept of restricted zone per product
+* Renamed ``currency`` to ``currencyCode`` in variables and methods where the code string is being used (especially in ``Order``, ``Customer`` and ``CurrencyContext``)
+* Use ``Promotion`` codes instead of ``Originator`` in actions
+
+### PayumBundle
+
+* Upgraded to PayumBundle v2.1, configuration has changed, please take a look at [Payum/PayumBundle/Upgrade.md](https://github.com/Payum/PayumBundle/blob/master/UPGRADE.md)
+
+### Variation and VariationBundle
+
+* Removed concept of master variant (removed ``$master`` flag from ``Sylius\Component\Variation\Model\Variant``), all usages of **master** variant has been, for now, replaced with **first** variant;
+* Renamed `presentation` to `name` (`VariantInterface`, `OptionValueInterface`) 
+
+### Payment
+
+* Renamed ``currency`` to ``currencyCode`` in variables and methods where the code string is being used (especially in ``Payment`` and ``PaymentFactory``)
+
+### Originator
+
+* Removed ``Originator`` component
+
+## From 0.17 to 0.18.x
+
+### Application
+
+* Moved some of the parameters out of parameters.yml.dist file, please check your configurations;
+* Moved parameters are now in ``CoreBundle/Resource/config/app.parameters.yml``, you should import them before your own parameters.yml file;
+* Renamed basic parameters to match Symfony Standard's conventions:
+
+Before:
+
+```yaml
+%sylius.database.host%
+%sylius.locale%
+
+# etc.
+```
+
+After:
+
+```yaml
+%database_host%
+%locale%
+```
+
+### HWIOAuthBundle is now optional
+
+HWIOAuthBundle for social logins is no longer a required dependency. If you would like to use it in your project, you should add it to composer.json's ``require`` section, install it and add proper configuration for routing:
+
+```yml
+# routing.yml
+
+hwi_oauth_security:
+    resource: "@HWIOAuthBundle/Resources/config/routing/login.xml"
+    prefix: /connect-login
+
+hwi_oauth_redirect:
+    resource: "@HWIOAuthBundle/Resources/config/routing/redirect.xml"
+    prefix: /connect
+
+amazon_login:
+    path: /connect-login/check-amazon
+
+facebook_login:
+    path: /connect-login/check-facebook
+
+google_login:
+    path: /connect-login/check-google
+```
+
+And for security:
+
+```yml
+# security.yml
+
+# For your shop firewall, configure "oauth" section:
+
+oauth:
+    resource_owners:
+        amazon:   "/connect-login/check-amazon"
+        facebook: "/connect-login/check-facebook"
+        google:   "/connect-login/check-google"
+        login_path:   /login
+        failure_path: /login
+        oauth_user_provider:
+            service: sylius.oauth.user_provider
+```
+
+### Translation and TranslationBundle
+
+* Merged ``Translation`` component with ``Resource`` component
+* Merged ``TranslationBundle`` with ``ResourceBundle``
+* Renamed ``TranslatableResourceRepository`` to ``TranslatableRepository``
+
+### Core and CoreBundle
+
+* Removed "exclude" option from ``taxon`` rule
+* Changed ``ORDER_PROMOTION_ADJUSTMENT``s to be added on ``OrderItemUnit`` level instead of ``Order`` level, based on distributed promotion amount
+
+### SettingsBundle
+
+* Renamed `sylius_settings_all()` Twig function to `sylius_settings()`
+* Removed `sylius_settings_get('foo.property')` and `sylius_settings_has('foo.property')` Twig functions, use
+  `sylius_settings('foo').property` and `sylius_settings('foo').property is defined` instead
+
 ## From 0.16 to 0.17.x
+
+### Promotion and PromotionBundle
+
+* Changed "item_count" promotion type into "cart_quantity". It now checks cart quantity instead different items number.
 
 ### Resource and SyliusResourceBundle
 
@@ -273,6 +431,26 @@ After:
 ### Currency
 
 ``CurrencyConverterInterface`` ``convert()`` method renamed to ``convertFromBase()``.
+
+### Content
+```bash
+#!/bin/sh
+
+set -ex
+
+app/console doctrine:phpcr:document:migrate-class "Symfony\Cmf\Bundle\ContentBundle\Doctrine\Phpcr\StaticContent" "Sylius\Bundle\ContentBundle\Document\StaticContent"
+app/console doctrine:phpcr:document:migrate-class "Symfony\Cmf\Bundle\RoutingBundle\Doctrine\Phpcr\Route" "Sylius\Bundle\ContentBundle\Document\Route"
+app/console doctrine:phpcr:document:migrate-class "Symfony\Cmf\Bundle\RoutingBundle\Doctrine\Phpcr\RedirectRoute" "Sylius\Bundle\ContentBundle\Document\RedirectRoute"
+app/console doctrine:phpcr:document:migrate-class "Symfony\Cmf\Bundle\MenuBundle\Doctrine\Phpcr\Menu" "Sylius\Bundle\ContentBundle\Document\Menu"
+app/console doctrine:phpcr:document:migrate-class "Symfony\Cmf\Bundle\MenuBundle\Doctrine\Phpcr\MenuNode" "Sylius\Bundle\ContentBundle\Document\MenuNode"
+app/console doctrine:phpcr:document:migrate-class "Symfony\Cmf\Bundle\BlockBundle\Doctrine\Phpcr\SlideshowBlock" "Sylius\Bundle\ContentBundle\Document\SlideshowBlock"
+app/console doctrine:phpcr:document:migrate-class "Symfony\Cmf\Bundle\BlockBundle\Doctrine\Phpcr\ImagineBlock" "Sylius\Bundle\ContentBundle\Document\ImagineBlock"
+app/console doctrine:phpcr:document:migrate-class "Symfony\Cmf\Bundle\BlockBundle\Doctrine\Phpcr\ActionBlock" "Sylius\Bundle\ContentBundle\Document\ActionBlock"
+app/console doctrine:phpcr:document:migrate-class "Symfony\Cmf\Bundle\BlockBundle\Doctrine\Phpcr\MenuBlock" "Sylius\Bundle\ContentBundle\Document\MenuBlock"
+app/console doctrine:phpcr:document:migrate-class "Symfony\Cmf\Bundle\BlockBundle\Doctrine\Phpcr\ReferenceBlock" "Sylius\Bundle\ContentBundle\Document\ReferenceBlock"
+app/console doctrine:phpcr:document:migrate-class "Symfony\Cmf\Bundle\BlockBundle\Doctrine\Phpcr\SimpleBlock" "Sylius\Bundle\ContentBundle\Document\SimpleBlock"
+app/console doctrine:phpcr:document:migrate-class "Symfony\Cmf\Bundle\BlockBundle\Doctrine\Phpcr\StringBlock" "Sylius\Bundle\ContentBundle\Document\StringBlock"
+```
 
 ## From 0.15.0 to 0.16.x
 

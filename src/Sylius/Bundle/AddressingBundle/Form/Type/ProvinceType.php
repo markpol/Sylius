@@ -16,7 +16,7 @@ use Sylius\Bundle\ResourceBundle\Form\Type\AbstractResourceType;
 use Symfony\Component\Form\FormBuilderInterface;
 
 /**
- * @author Paweł Jędrzejewski <pjedrzejewski@sylius.pl>
+ * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
 class ProvinceType extends AbstractResourceType
 {
@@ -31,7 +31,8 @@ class ProvinceType extends AbstractResourceType
                 'label' => 'sylius.form.province.name',
             ])
             ->add('abbreviation', 'text', [
-                'label' => false,
+                'label' => 'sylius.form.province.abbreviation',
+                'required' => false,
             ])
         ;
     }

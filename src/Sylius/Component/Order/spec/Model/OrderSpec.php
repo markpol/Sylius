@@ -15,7 +15,6 @@ use PhpSpec\ObjectBehavior;
 use Prophecy\Argument;
 use Sylius\Component\Order\Model\AdjustableInterface;
 use Sylius\Component\Order\Model\AdjustmentInterface;
-use Sylius\Component\Order\Model\IdentityInterface;
 use Sylius\Component\Order\Model\OrderInterface;
 use Sylius\Component\Order\Model\OrderItemInterface;
 use Sylius\Component\Resource\Model\TimestampableInterface;
@@ -23,7 +22,7 @@ use Sylius\Component\Resource\Model\TimestampableInterface;
 /**
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
-class OrderSpec extends ObjectBehavior
+final class OrderSpec extends ObjectBehavior
 {
     function it_is_initializable()
     {
@@ -97,36 +96,12 @@ class OrderSpec extends ObjectBehavior
         $this->getItems()->shouldHaveType('Doctrine\\Common\\Collections\\Collection');
     }
 
-    function it_creates_identities_collection_by_default()
-    {
-        $this->getIdentities()->shouldHaveType('Doctrine\\Common\\Collections\\Collection');
-    }
-
-    function it_adds_identities_properly(IdentityInterface $identity)
-    {
-        $this->hasIdentity($identity)->shouldReturn(false);
-
-        $this->addIdentity($identity);
-        $this->hasIdentity($identity)->shouldReturn(true);
-    }
-
     function it_adds_items_properly(OrderItemInterface $item)
     {
         $this->hasItem($item)->shouldReturn(false);
 
         $this->addItem($item);
         $this->hasItem($item)->shouldReturn(true);
-    }
-
-    function it_removes_identities_properly(IdentityInterface $identity)
-    {
-        $this->hasIdentity($identity)->shouldReturn(false);
-
-        $this->addIdentity($identity);
-        $this->hasIdentity($identity)->shouldReturn(true);
-
-        $this->removeIdentity($identity);
-        $this->hasIdentity($identity)->shouldReturn(false);
     }
 
     function it_removes_items_properly(OrderItemInterface $item)
@@ -199,6 +174,48 @@ class OrderSpec extends ObjectBehavior
         $this->removeAdjustment($adjustment);
 
         $this->hasAdjustment($adjustment)->shouldReturn(false);
+    }
+
+    function it_removes_adjustments_recursively_properly(
+        AdjustmentInterface $orderAdjustment,
+        OrderItemInterface $item
+    ) {
+        $this->addAdjustment($orderAdjustment);
+        $this->addItem($item);
+
+        $item->removeAdjustmentsRecursively(null)->shouldBeCalled();
+
+        $this->removeAdjustmentsRecursively();
+
+        $this->hasAdjustment($orderAdjustment)->shouldReturn(false);
+    }
+
+    function it_removes_adjustments_recursively_by_type_properly(
+        AdjustmentInterface $orderPromotionAdjustment,
+        AdjustmentInterface $orderTaxAdjustment,
+        OrderItemInterface $item
+    ) {
+        $orderPromotionAdjustment->getType()->willReturn('promotion');
+        $orderPromotionAdjustment->isNeutral()->willReturn(true);
+        $orderPromotionAdjustment->setAdjustable($this)->shouldBeCalled();
+        $orderPromotionAdjustment->isLocked()->willReturn(false);
+
+        $orderTaxAdjustment->getType()->willReturn('tax');
+        $orderTaxAdjustment->isNeutral()->willReturn(true);
+        $orderTaxAdjustment->setAdjustable($this)->shouldBeCalled();
+        $orderTaxAdjustment->isLocked()->willReturn(false);
+
+        $this->addAdjustment($orderPromotionAdjustment);
+        $this->addAdjustment($orderTaxAdjustment);
+        $this->addItem($item);
+
+        $item->removeAdjustmentsRecursively('tax')->shouldBeCalled();
+        $orderTaxAdjustment->setAdjustable(null)->shouldBeCalled();
+
+        $this->removeAdjustmentsRecursively('tax');
+
+        $this->hasAdjustment($orderPromotionAdjustment)->shouldReturn(true);
+        $this->hasAdjustment($orderTaxAdjustment)->shouldReturn(false);
     }
 
     function it_returns_adjustments_recursively(
@@ -445,14 +462,9 @@ class OrderSpec extends ObjectBehavior
         $this->shouldBeEmpty();
     }
 
-    function it_should_be_able_to_clear_adjustments(AdjustmentInterface $adjustment)
+    function it_has_notes()
     {
-        $this->hasAdjustment($adjustment)->shouldReturn(false);
-        $this->addAdjustment($adjustment);
-        $this->hasAdjustment($adjustment)->shouldReturn(true);
-
-        $this->clearAdjustments();
-
-        $this->hasAdjustment($adjustment)->shouldReturn(false);
+        $this->setNotes('something squishy');
+        $this->getNotes()->shouldReturn('something squishy');
     }
 }

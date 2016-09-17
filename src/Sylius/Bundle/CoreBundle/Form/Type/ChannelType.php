@@ -15,8 +15,6 @@ use Sylius\Bundle\ChannelBundle\Form\Type\ChannelType as BaseChannelType;
 use Symfony\Component\Form\FormBuilderInterface;
 
 /**
- * Configurable channel form type.
- *
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
 class ChannelType extends BaseChannelType
@@ -29,23 +27,41 @@ class ChannelType extends BaseChannelType
         parent::buildForm($builder, $options);
 
         $builder
-            ->add('taxonomies', 'sylius_taxonomy_choice', [
-                'label' => 'sylius.form.channel.taxonomies',
+            ->add('taxons', 'sylius_taxon_choice', [
+                'label' => 'sylius.form.channel.taxons',
                 'multiple' => true,
             ])
             ->add('locales', 'sylius_locale_choice', [
                 'label' => 'sylius.form.channel.locales',
+                'required' => true,
                 'multiple' => true,
             ])
             ->add('defaultLocale', 'sylius_locale_choice', [
                 'label' => 'sylius.form.channel.locale_default',
+                'required' => true,
+                'empty_value' => null,
             ])
             ->add('currencies', 'sylius_currency_choice', [
                 'label' => 'sylius.form.channel.currencies',
+                'required' => true,
                 'multiple' => true,
             ])
             ->add('defaultCurrency', 'sylius_currency_choice', [
                 'label' => 'sylius.form.channel.currency_default',
+                'required' => true,
+            ])
+            ->add('defaultTaxZone', 'sylius_zone_choice', [
+                'required' => false,
+                'label' => 'sylius.form.channel.tax_zone_default',
+            ])
+            ->add('taxCalculationStrategy', 'sylius_tax_calculation_strategy_choice', [
+                'label' => 'sylius.form.channel.tax_calculation_strategy',
+            ])
+            ->add('themeName', 'sylius_theme_name_choice', [
+                'label' => 'sylius.form.channel.theme',
+                'required' => false,
+                'empty_data' => null,
+                'empty_value' => 'sylius.ui.no_theme',
             ])
             ->add('shippingMethods', 'sylius_shipping_method_choice', [
                 'label' => 'sylius.form.channel.shipping_methods',

@@ -12,9 +12,7 @@
 namespace Sylius\Bundle\UserBundle\Command;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Sylius\Bundle\ResourceBundle\Doctrine\ORM\EntityRepository;
-use Sylius\Component\Core\Model\UserInterface;
-use Sylius\Component\Rbac\Model\RoleInterface;
+use Sylius\Component\Core\Model\ShopUserInterface;
 use Sylius\Component\Resource\Factory\FactoryInterface;
 use Symfony\Bundle\FrameworkBundle\Command\ContainerAwareCommand;
 use Symfony\Component\Console\Input\InputArgument;
@@ -38,7 +36,7 @@ class CreateUserCommand extends ContainerAwareCommand
             ->setDefinition([
                 new InputArgument('email', InputArgument::REQUIRED, 'Email'),
                 new InputArgument('password', InputArgument::REQUIRED, 'Password'),
-                new InputArgument('roles', InputArgument::IS_ARRAY, 'RBAC roles'),
+                new InputArgument('roles', InputArgument::IS_ARRAY, 'Security roles'),
                 new InputOption('super-admin', null, InputOption::VALUE_NONE, 'Set the user as a super admin'),
                 new InputOption('disabled', null, InputOption::VALUE_NONE, 'Set the user as a disabled user'),
             ])
@@ -65,11 +63,14 @@ EOT
             $securityRoles[] = 'ROLE_ADMINISTRATION_ACCESS';
         }
 
+        foreach ($roles as $role) {
+            $securityRoles[] = $role;
+        }
+
         $user = $this->createUser(
             $email,
             $password,
             !$disabled,
-            $roles,
             $securityRoles
         );
 
@@ -132,17 +133,16 @@ EOT
      * @param string $email
      * @param string $password
      * @param bool $enabled
-     * @param array $roles
      * @param array $securityRoles
      *
-     * @return UserInterface
+     * @return ShopUserInterface
      */
-    protected function createUser($email, $password, $enabled, array $roles, array $securityRoles = ['ROLE_USER'])
+    protected function createUser($email, $password, $enabled, array $securityRoles = ['ROLE_USER'])
     {
         $canonicalizer = $this->getContainer()->get('sylius.user.canonicalizer');
 
         /*
-         * @var UserInterface
+         * @var ShopUserInterface
          * @var $customer CustomerInterface
          */
         $user = $this->getUserFactory()->createNew();
@@ -155,21 +155,6 @@ EOT
         $user->setPlainPassword($password);
         $user->setRoles($securityRoles);
         $user->setEnabled($enabled);
-
-        $roleRepository = $this->getContainer()->get('sylius.repository.role');
-        foreach ($roles as $code) {
-            /** @var RoleInterface $role */
-            $role = $roleRepository->findOneBy(['code' => $code]);
-
-            if (null === $role) {
-                throw new \InvalidArgumentException(
-                    sprintf('No role with code `%s` does not exist.', $code)
-                );
-            }
-
-            $user->addAuthorizationRole($role);
-        }
-
         $this->getContainer()->get('sylius.user.password_updater')->updatePassword($user);
 
         return $user;
@@ -188,7 +173,7 @@ EOT
      */
     protected function getUserFactory()
     {
-        return $this->getContainer()->get('sylius.factory.user');
+        return $this->getContainer()->get('sylius.factory.shop_user');
     }
 
     /**
@@ -197,13 +182,5 @@ EOT
     protected function getCustomerFactory()
     {
         return $this->getContainer()->get('sylius.factory.customer');
-    }
-
-    /**
-     * @return EntityRepository
-     */
-    protected function getRoleRepository()
-    {
-        return $this->getContainer()->get('sylius.repository.role');
     }
 }

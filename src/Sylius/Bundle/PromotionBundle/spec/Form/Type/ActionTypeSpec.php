@@ -26,14 +26,14 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
  * @author Saša Stamenković <umpirsky@gmail.com>
  * @author Arnaud Langlade <arn0d.dev@gmail.com>
  */
-class ActionTypeSpec extends ObjectBehavior
+final class ActionTypeSpec extends ObjectBehavior
 {
     function let(ServiceRegistryInterface $actionRegistry)
     {
         $this->beConstructedWith('Action', $actionRegistry);
     }
 
-    function it_is_initializabled()
+    function it_is_initializable()
     {
         $this->shouldHaveType(ActionType::class);
     }
@@ -60,22 +60,6 @@ class ActionTypeSpec extends ObjectBehavior
         $this->buildForm($builder, [
             'configuration_type' => 'configuration_form_type',
         ]);
-    }
-
-    function it_should_define_assigned_data_class(OptionsResolver $resolver)
-    {
-        $resolver
-            ->setDefaults([
-                'data_class' => 'Action',
-                'validation_groups' => ['Default'],
-            ])
-            ->shouldBeCalled()
-        ;
-
-        $resolver->setDefined(['configuration_type'])->shouldBeCalled();
-        $resolver->setDefaults(['configuration_type' => ActionInterface::TYPE_FIXED_DISCOUNT])->shouldBeCalled();
-
-        $this->configureOptions($resolver);
     }
 
     function it_has_a_name()

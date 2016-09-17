@@ -7,52 +7,53 @@
     "license": "MIT",
     "authors": [
         {
-            "name":     "Paweł Jędrzejewski",
+            "name": "Paweł Jędrzejewski",
             "homepage": "http://pjedrzejewski.com"
         },
         {
-            "name":     "Sylius project",
+            "name": "Sylius project",
             "homepage": "http://sylius.org"
         },
         {
-            "name":     "Community contributions",
+            "name": "Community contributions",
             "homepage": "http://github.com/Sylius/Sylius/contributors"
         }
     ],
     "require": {
-        "php": "^5.5.9|^7.0",
+        "php": "^5.6|^7.0",
 
         "knplabs/gaufrette": "0.2.*@dev",
-        "sylius/addressing": "0.17.*",
-        "sylius/archetype": "0.17.*",
-        "sylius/attribute": "0.17.*",
-        "sylius/cart": "0.17.*",
-        "sylius/channel": "0.17.*",
-        "sylius/contact": "0.17.*",
-        "sylius/currency": "0.17.*",
-        "sylius/inventory": "0.17.*",
-        "sylius/locale": "0.17.*",
-        "sylius/order": "0.17.*",
-        "sylius/originator": "0.17.*",
-        "sylius/payment": "0.17.*",
-        "sylius/pricing": "0.17.*",
-        "sylius/product": "0.17.*",
-        "sylius/promotion": "0.17.*",
-        "sylius/rbac": "0.17.*",
-        "sylius/registry": "0.17.*",
-        "sylius/resource": "0.17.*",
-        "sylius/sequence": "0.17.*",
-        "sylius/shipping": "0.17.*",
-        "sylius/storage": "0.17.*",
-        "sylius/taxation": "0.17.*",
-        "sylius/taxonomy": "0.17.*",
-        "sylius/translation": "0.17.*",
-        "sylius/user": "0.17.*",
-        "sylius/variation": "0.17.*"
+        "sylius/addressing": "^1.0",
+        "sylius/attribute": "^1.0",
+        "sylius/cart": "^1.0",
+        "sylius/channel": "^1.0",
+        "sylius/contact": "^1.0",
+        "sylius/currency": "^1.0",
+        "sylius/customer": "^1.0",
+        "sylius/inventory": "^1.0",
+        "sylius/locale": "^1.0",
+        "sylius/order": "^1.0",
+        "sylius/payment": "^1.0",
+        "sylius/pricing": "^1.0",
+        "sylius/product": "^1.0",
+        "sylius/promotion": "^1.0",
+        "sylius/rbac": "^1.0",
+        "sylius/registry": "^1.0",
+        "sylius/resource": "^1.0",
+        "sylius/shipping": "^1.0",
+        "sylius/storage": "^1.0",
+        "sylius/taxation": "^1.0",
+        "sylius/taxonomy": "^1.0",
+        "sylius/user": "^1.0",
+        "sylius/variation": "^1.0",
+        "sylius/association": "^1.0",
+        "sylius/review": "^1.0",
+        "webmozart/assert": "^1.0",
+        "zendframework/zend-stdlib": "^2.0|^3.0"
     },
     "require-dev": {
-        "phpspec/phpspec": "^2.4",
-        "symfony/property-access": "^2.7"
+        "phpspec/phpspec": "^3.0",
+        "symfony/property-access": "^2.8"
     },
     "config": {
         "bin-dir": "bin"
@@ -64,9 +65,16 @@
         "psr-4": { "Sylius\\Component\\Core\\spec\\": "spec/" }
     },
     "minimum-stability": "dev",
+    "prefer-stable": true,
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../../*/*"
+        }
+    ],
     "extra": {
         "branch-alias": {
-            "dev-master": "0.17-dev"
+            "dev-master": "1.0-dev"
         }
     }
 }

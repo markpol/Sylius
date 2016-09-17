@@ -18,7 +18,7 @@ use Symfony\Component\Form\FormTypeInterface;
 /**
  * @author Gonzalo Vilaseca <gvilaseca@reiss.co.uk>
  */
-class ProductTranslationTypeSpec extends ObjectBehavior
+final class ProductTranslationTypeSpec extends ObjectBehavior
 {
     function let()
     {
@@ -47,6 +47,7 @@ class ProductTranslationTypeSpec extends ObjectBehavior
 
         $builder
             ->add('description', 'textarea', [
+                'required' => false,
                 'label' => 'sylius.form.product.description',
             ])
             ->shouldBeCalled()

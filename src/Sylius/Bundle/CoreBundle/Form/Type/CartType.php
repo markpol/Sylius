@@ -19,23 +19,10 @@ use Symfony\Component\Form\FormEvents;
 
 /**
  * @author Julien Janvier <j.janvier@gmail.com>
+ * @author Mateusz Zalewski <mateusz.zalewski@lakion.com>
  */
 class CartType extends BaseCartType
 {
-    protected $couponFactory;
-
-    /**
-     * @param string              $dataClass        FQCN of cart model
-     * @param string[]            $validationGroups
-     * @param FactoryInterface $couponFactory
-     */
-    public function __construct($dataClass, array $validationGroups, FactoryInterface $couponFactory)
-    {
-        parent::__construct($dataClass, $validationGroups);
-
-        $this->couponFactory = $couponFactory;
-    }
-
     /**
      * {@inheritdoc}
      */
@@ -47,20 +34,8 @@ class CartType extends BaseCartType
             ->add('promotionCoupon', 'sylius_promotion_coupon_to_code', [
                 'by_reference' => false,
                 'label' => 'sylius.form.cart.coupon',
+                'required' => false,
             ])
-            ->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event) {
-                $data = $event->getData();
-
-                if (null !== $data->getPromotionCoupon()) {
-                    return;
-                }
-
-                if ($event->getForm()->has('promotionCoupon')) {
-                    $data->setPromotionCoupon(
-                        $this->couponFactory->createNew()
-                    );
-                }
-            })
         ;
     }
 }

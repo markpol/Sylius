@@ -18,7 +18,7 @@ use Sylius\Component\Promotion\Model\PromotionInterface;
 /**
  * @author Saša Stamenković <umpirsky@gmail.com>
  */
-class ActionSpec extends ObjectBehavior
+final class ActionSpec extends ObjectBehavior
 {
     function it_is_initializable()
     {
@@ -42,8 +42,8 @@ class ActionSpec extends ObjectBehavior
 
     function its_type_should_be_mutable()
     {
-        $this->setType(ActionInterface::TYPE_FIXED_DISCOUNT);
-        $this->getType()->shouldReturn(ActionInterface::TYPE_FIXED_DISCOUNT);
+        $this->setType('test_action');
+        $this->getType()->shouldReturn('test_action');
     }
 
     function it_should_initialize_array_for_configuration_by_default()

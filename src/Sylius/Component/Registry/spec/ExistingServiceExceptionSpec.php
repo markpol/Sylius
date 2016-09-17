@@ -16,11 +16,11 @@ use PhpSpec\ObjectBehavior;
 /**
  * @author Saša Stamenković <umpirsky@gmail.com>
  */
-class ExistingServiceExceptionSpec extends ObjectBehavior
+final class ExistingServiceExceptionSpec extends ObjectBehavior
 {
     function let()
     {
-        $this->beConstructedWith('foo');
+        $this->beConstructedWith('Service', 'foo');
     }
 
     function it_is_initializable()

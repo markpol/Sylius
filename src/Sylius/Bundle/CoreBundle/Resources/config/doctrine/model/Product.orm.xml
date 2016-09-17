@@ -20,15 +20,15 @@
     <mapped-superclass name="Sylius\Component\Core\Model\Product" table="sylius_product">
 
         <field name="variantSelectionMethod" column="variant_selection_method" type="string" nullable="false" />
-        <field name="averageRating" column="average_rating" type="float" />
+        <field name="averageRating" column="average_rating" type="float">
+            <options>
+                <option name="default">0</option>
+            </options>
+        </field>
 
         <many-to-one field="shippingCategory" target-entity="Sylius\Component\Shipping\Model\ShippingCategoryInterface">
             <join-column name="shipping_category_id" referenced-column-name="id" nullable="true" on-delete="SET NULL" />
             <gedmo:versioned />
-        </many-to-one>
-
-        <many-to-one field="restrictedZone" target-entity="Sylius\Component\Addressing\Model\ZoneInterface">
-            <join-column name="restricted_zone" referenced-column-name="id" nullable="true" on-delete="SET NULL" />
         </many-to-one>
 
         <many-to-many field="taxons" inversed-by="products" target-entity="Sylius\Component\Taxonomy\Model\TaxonInterface">

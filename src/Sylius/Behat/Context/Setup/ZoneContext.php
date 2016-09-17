@@ -12,10 +12,17 @@
 namespace Sylius\Behat\Context\Setup;
 
 use Behat\Behat\Context\Context;
+use Doctrine\Common\Persistence\ObjectManager;
 use Sylius\Bundle\AddressingBundle\Factory\ZoneFactoryInterface;
-use Sylius\Bundle\SettingsBundle\Manager\SettingsManagerInterface;
+use Sylius\Component\Addressing\Model\CountryInterface;
+use Sylius\Component\Addressing\Model\ProvinceInterface;
 use Sylius\Component\Addressing\Model\ZoneInterface;
-use Sylius\Component\Resource\Repository\RepositoryInterface;
+use Sylius\Component\Addressing\Model\ZoneMemberInterface;
+use Sylius\Component\Addressing\Repository\ZoneRepositoryInterface;
+use Sylius\Component\Core\Model\ChannelInterface;
+use Sylius\Behat\Service\SharedStorageInterface;
+use Sylius\Component\Resource\Factory\FactoryInterface;
+use Sylius\Component\Resource\Model\CodeAwareInterface;
 use Symfony\Component\Intl\Intl;
 
 /**
@@ -24,23 +31,19 @@ use Symfony\Component\Intl\Intl;
 final class ZoneContext implements Context
 {
     /**
-     * @var array
+     * @var SharedStorageInterface
      */
-    private $euMembers = [
-        'BE', 'BG', 'CZ', 'DK', 'DE', 'EE', 'IE', 'GR', 'ES',
-        'FR', 'IT', 'CY', 'LV', 'LT', 'LU', 'HU', 'MT', 'NL',
-        'AT', 'PL', 'PT', 'RO', 'SI', 'SK', 'FI', 'SE', 'GB',
-    ];
+    private $sharedStorage;
 
     /**
-     * @var RepositoryInterface
+     * @var ZoneRepositoryInterface
      */
     private $zoneRepository;
 
     /**
-     * @var SettingsManagerInterface
+     * @var ObjectManager
      */
-    private $settingsManager;
+    private $objectManager;
 
     /**
      * @var ZoneFactoryInterface
@@ -48,89 +51,139 @@ final class ZoneContext implements Context
     private $zoneFactory;
 
     /**
-     * @param RepositoryInterface $zoneRepository
-     * @param SettingsManagerInterface $settingsManager
+     * @var FactoryInterface
+     */
+    private $zoneMemberFactory;
+
+    /**
+     * @param SharedStorageInterface $sharedStorage
+     * @param ZoneRepositoryInterface $zoneRepository
+     * @param ObjectManager $objectManager
      * @param ZoneFactoryInterface $zoneFactory
+     * @param FactoryInterface $zoneMemberFactory
      */
     public function __construct(
-        RepositoryInterface $zoneRepository,
-        SettingsManagerInterface $settingsManager,
-        ZoneFactoryInterface $zoneFactory
+        SharedStorageInterface $sharedStorage,
+        ZoneRepositoryInterface $zoneRepository,
+        ObjectManager $objectManager,
+        ZoneFactoryInterface $zoneFactory,
+        FactoryInterface $zoneMemberFactory
     ) {
+        $this->sharedStorage = $sharedStorage;
         $this->zoneRepository = $zoneRepository;
-        $this->settingsManager = $settingsManager;
+        $this->objectManager = $objectManager;
         $this->zoneFactory = $zoneFactory;
+        $this->zoneMemberFactory = $zoneMemberFactory;
     }
 
     /**
-     * @Transform :zone zone
-     * @Transform zone :zone
-     * @Transform :zone
+     * @Given /^there is a zone "The Rest of the World" containing all other countries$/
      */
-    public function getZoneByCode($zone)
+    public function thereIsAZoneTheRestOfTheWorldContainingAllOtherCountries()
     {
-        $existingZone = $this->zoneRepository->findOneBy(['code' => $zone]);
-        if (null === $existingZone) {
-            throw new \InvalidArgumentException(sprintf('Zone with code "%s" does not exist.', $zone));
-        }
+        $restOfWorldCountries = Intl::getRegionBundle()->getCountryNames('en');
+        unset($restOfWorldCountries['US']);
 
-        return $existingZone;
-    }
-
-    /**
-     * @Transform /^rest of the world$/
-     * @Transform /^the rest of the world$/
-     */
-    public function getRestOfTheWorldZone()
-    {
-        $zone = $this->zoneRepository->findOneBy(['code' => 'RoW']);
-        if (null === $zone) {
-            throw new \Exception('Rest of the world zone does not exist.');
-        }
-
-        return $zone;
-    }
-
-    /**
-     * @Given /^there is "EU" zone containing all members of European Union$/
-     */
-    public function thereIsEUZoneContainingAllMembersOfEuropeanUnion()
-    {
-        $zone = $this->zoneFactory->createWithMembers($this->euMembers);
-        $zone->setType(ZoneInterface::TYPE_COUNTRY);
-        $zone->setCode('EU');
-        $zone->setName('European Union');
-
-        $this->zoneRepository->add($zone);
-    }
-
-    /**
-     * @Given /^there is rest of the world zone containing all other countries$/
-     */
-    public function thereIsRestOfTheWorldZoneContainingAllOtherCountries()
-    {
-        $restOfWorldCountries = array_diff(
-            array_keys(Intl::getRegionBundle()->getCountryNames('en')),
-            array_merge($this->euMembers, ['US'])
-        );
-
-        $zone = $this->zoneFactory->createWithMembers($restOfWorldCountries);
+        $zone = $this->zoneFactory->createWithMembers(array_keys($restOfWorldCountries));
         $zone->setType(ZoneInterface::TYPE_COUNTRY);
         $zone->setCode('RoW');
-        $zone->setName('Rest of the World');
+        $zone->setName('The Rest of the World');
 
         $this->zoneRepository->add($zone);
     }
 
     /**
-     * @Given default tax zone is :taxZone
+     * @Given default tax zone is :zone
      */
-    public function defaultTaxZoneIs($taxZone)
+    public function defaultTaxZoneIs(ZoneInterface $zone)
     {
-        $zone = $this->getZoneByCode($taxZone);
+        /** @var ChannelInterface $channel */
+        $channel = $this->sharedStorage->get('channel');
+        $channel->setDefaultTaxZone($zone);
 
-        $settings = $this->settingsManager->loadSettings('sylius_taxation');
-        $settings->set('default_tax_zone', $zone);
-        $this->settingsManager->saveSettings('sylius_taxation', $settings);
+        $this->objectManager->flush();
+    }
+
+    /**
+     * @Given the store does not have any zones defined
+     */
+    public function theStoreDoesNotHaveAnyZonesDefined()
+    {
+        $zones = $this->zoneRepository->findAll();
+
+        foreach ($zones as $zone) {
+            $this->zoneRepository->remove($zone);
+        }
+    }
+
+    /**
+     * @Given the store has a zone :zoneName with code :code
+     * @Given the store also has a zone :zoneName with code :code
+     */
+    public function theStoreHasAZoneWithCode($zoneName, $code)
+    {
+        $zone = $this->zoneFactory->createTyped(ZoneInterface::TYPE_ZONE);
+        $zone->setCode($code);
+        $zone->setName($zoneName);
+
+        $this->sharedStorage->set('zone', $zone);
+        $this->zoneRepository->add($zone);
+    }
+
+    /**
+     * @Given /^(it)(?:| also) has the ("([^"]+)" country) member$/
+     * @Given /^(this zone)(?:| also) has the ("([^"]+)" country) member$/
+     */
+    public function itHasTheCountryMemberAndTheCountryMember(
+        ZoneInterface $zone,
+        CountryInterface $country
+    ) {
+        $zone->setType(ZoneInterface::TYPE_COUNTRY);
+        $zone->addMember($this->createZoneMember($country));
+
+        $this->objectManager->flush();
+    }
+
+    /**
+     * @Given /^(it) has the ("([^"]+)" province) member$/
+     * @Given /^(it) also has the ("([^"]+)" province) member$/
+     */
+    public function itHasTheProvinceMemberAndTheProvinceMember(
+        ZoneInterface $zone,
+        ProvinceInterface $province
+    ) {
+        $zone->setType(ZoneInterface::TYPE_PROVINCE);
+        $zone->addMember($this->createZoneMember($province));
+
+        $this->objectManager->flush();
+    }
+
+    /**
+     * @Given /^(it) has the (zone named "([^"]+)")$/
+     * @Given /^(it) also has the (zone named "([^"]+)")$/
+     */
+    public function itHasTheZoneMemberAndTheZoneMember(
+        ZoneInterface $parentZone,
+        ZoneInterface $childZone
+    ) {
+        $parentZone->setType(ZoneInterface::TYPE_ZONE);
+        $parentZone->addMember($this->createZoneMember($childZone));
+
+        $this->objectManager->flush();
+    }
+
+    /**
+     * @param CodeAwareInterface $zoneMember
+     *
+     * @return ZoneMemberInterface
+     */
+    private function createZoneMember(CodeAwareInterface $zoneMember)
+    {
+        $code = $zoneMember->getCode();
+        /** @var ZoneMemberInterface $zoneMember */
+        $zoneMember = $this->zoneMemberFactory->createNew();
+        $zoneMember->setCode($code);
+
+        return $zoneMember;
     }
 }

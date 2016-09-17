@@ -14,7 +14,7 @@ namespace spec\Sylius\Bundle\MailerBundle\Form\Type;
 use PhpSpec\ObjectBehavior;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
-class EmailTemplateChoiceTypeSpec extends ObjectBehavior
+final class EmailTemplateChoiceTypeSpec extends ObjectBehavior
 {
     function let()
     {
@@ -31,7 +31,8 @@ class EmailTemplateChoiceTypeSpec extends ObjectBehavior
     function it_has_options(OptionsResolver $resolver)
     {
         $resolver->setDefaults([
-            'choices' => ['my_template' => 'template'],
+            'choices' => ['template' => 'my_template'],
+            'choices_as_values' => true,
         ])->shouldBeCalled();
 
         $this->configureOptions($resolver);

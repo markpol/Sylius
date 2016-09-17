@@ -27,36 +27,48 @@ class Theme implements ThemeInterface
     protected $path;
 
     /**
-     * @var array
-     */
-    protected $authors = [];
-
-    /**
-     * @var string
+     * @var string|null
      */
     protected $title;
 
     /**
-     * @var string
+     * @var string|null
      */
     protected $description;
 
     /**
-     * @var array
+     * @var ThemeAuthor[]
      */
-    protected $parentsNames = [];
+    protected $authors = [];
 
     /**
-     * @var string
+     * @var ThemeInterface[]
      */
-    protected $code;
+    protected $parents = [];
 
     /**
-     * {@inheritdoc}
+     * @var ThemeScreenshot[]
      */
-    public function getId()
+    protected $screenshots = [];
+
+    /**
+     * @param string $name
+     * @param string $path
+     */
+    public function __construct($name, $path)
     {
-        return $this->getName();
+        $this->assertNameIsValid($name);
+
+        $this->name = $name;
+        $this->path = $path;
+    }
+
+    /**
+     * @return string
+     */
+    public function __toString()
+    {
+        return $this->title ?: $this->name;
     }
 
     /**
@@ -70,42 +82,9 @@ class Theme implements ThemeInterface
     /**
      * {@inheritdoc}
      */
-    public function setName($name)
-    {
-        $this->name = $name;
-        $this->code = substr(md5($name), 0, 8);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function getPath()
     {
         return $this->path;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function setPath($path)
-    {
-        $this->path = $path;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getAuthors()
-    {
-        return $this->authors;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function setAuthors(array $authors)
-    {
-        $this->authors = $authors;
     }
 
     /**
@@ -143,24 +122,93 @@ class Theme implements ThemeInterface
     /**
      * {@inheritdoc}
      */
-    public function getParentsNames()
+    public function getAuthors()
     {
-        return $this->parentsNames;
+        return $this->authors;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function setParentsNames(array $parentsNames)
+    public function addAuthor(ThemeAuthor $author)
     {
-        $this->parentsNames = $parentsNames;
+        $this->authors[] = $author;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function getCode()
+    public function removeAuthor(ThemeAuthor $author)
     {
-        return $this->code;
+        $this->authors = array_filter($this->authors, function ($currentAuthor) use ($author) {
+            return $currentAuthor !== $author;
+        });
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getParents()
+    {
+        return $this->parents;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function addParent(ThemeInterface $theme)
+    {
+        $this->parents[] = $theme;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function removeParent(ThemeInterface $theme)
+    {
+        $this->parents = array_filter($this->parents, function ($currentTheme) use ($theme) {
+            return $currentTheme !== $theme;
+        });
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getScreenshots()
+    {
+        return $this->screenshots;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function addScreenshot(ThemeScreenshot $screenshot)
+    {
+        $this->screenshots[] = $screenshot;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function removeScreenshot(ThemeScreenshot $screenshot)
+    {
+        $this->screenshots = array_filter($this->screenshots, function ($currentScreenshot) use ($screenshot) {
+            return $currentScreenshot !== $screenshot;
+        });
+    }
+
+    /**
+     * @param string $name
+     */
+    private function assertNameIsValid($name)
+    {
+        $pattern = '/^[a-z\-]+\/[a-z\-]+$/i';
+        if (false === (bool) preg_match($pattern, $name)) {
+            throw new \InvalidArgumentException(sprintf(
+                'Given name "%s" does not match regular expression "%s".',
+                $name,
+                $pattern
+            ));
+        }
     }
 }

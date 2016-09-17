@@ -14,7 +14,7 @@ namespace spec\Sylius\Bundle\SettingsBundle\Form\Factory;
 use PhpSpec\ObjectBehavior;
 use Sylius\Bundle\SettingsBundle\Form\Factory\SettingsFormFactoryInterface;
 use Sylius\Bundle\SettingsBundle\Schema\SchemaInterface;
-use Sylius\Bundle\SettingsBundle\Schema\SchemaRegistryInterface;
+use Sylius\Component\Registry\ServiceRegistryInterface;
 use Symfony\Component\Form\Form;
 use Symfony\Component\Form\FormBuilder;
 use Symfony\Component\Form\FormFactoryInterface;
@@ -22,10 +22,10 @@ use Symfony\Component\Form\FormFactoryInterface;
 /**
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
-class SettingsFormFactorySpec extends ObjectBehavior
+final class SettingsFormFactorySpec extends ObjectBehavior
 {
     function let(
-        SchemaRegistryInterface $schemaRegistry,
+        ServiceRegistryInterface $schemaRegistry,
         FormFactoryInterface $formFactory
     ) {
         $this->beConstructedWith($schemaRegistry, $formFactory);
@@ -48,7 +48,7 @@ class SettingsFormFactorySpec extends ObjectBehavior
         FormBuilder $formBuilder,
         Form $form
     ) {
-        $schemaRegistry->getSchema('sylius_general')->willReturn($schema);
+        $schemaRegistry->get('sylius_general')->willReturn($schema);
         $formFactory->createBuilder('form', null, ['data_class' => null])->willReturn($formBuilder);
         $schema->buildForm($formBuilder)->shouldBeCalled()->willReturn($formBuilder);
         $formBuilder->getForm()->willReturn($form);

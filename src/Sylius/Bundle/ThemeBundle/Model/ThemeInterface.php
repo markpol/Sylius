@@ -11,12 +11,10 @@
 
 namespace Sylius\Bundle\ThemeBundle\Model;
 
-use Sylius\Component\Resource\Model\ResourceInterface;
-
 /**
  * @author Kamil Kokot <kamil.kokot@lakion.com>
  */
-interface ThemeInterface extends ResourceInterface
+interface ThemeInterface
 {
     /**
      * @return string
@@ -24,32 +22,12 @@ interface ThemeInterface extends ResourceInterface
     public function getName();
 
     /**
-     * @param string $name
-     */
-    public function setName($name);
-
-    /**
      * @return string
      */
     public function getPath();
 
     /**
-     * @param string $path
-     */
-    public function setPath($path);
-
-    /**
-     * @return array
-     */
-    public function getAuthors();
-
-    /**
-     * @param array $authors
-     */
-    public function setAuthors(array $authors);
-
-    /**
-     * @return string
+     * @return string|null
      */
     public function getTitle();
 
@@ -59,7 +37,7 @@ interface ThemeInterface extends ResourceInterface
     public function setTitle($title);
 
     /**
-     * @return string
+     * @return string|null
      */
     public function getDescription();
 
@@ -69,19 +47,47 @@ interface ThemeInterface extends ResourceInterface
     public function setDescription($description);
 
     /**
-     * @return array
+     * @return ThemeAuthor[]
      */
-    public function getParentsNames();
+    public function getAuthors();
 
     /**
-     * @param array $parentsNames
+     * @param ThemeAuthor $author
      */
-    public function setParentsNames(array $parentsNames);
+    public function addAuthor(ThemeAuthor $author);
 
     /**
-     * Should match /^[a-zA-Z0-9-_]{6,32}$/
-     *
-     * @return string
+     * @param ThemeAuthor $author
      */
-    public function getCode();
+    public function removeAuthor(ThemeAuthor $author);
+
+    /**
+     * @return ThemeInterface[]
+     */
+    public function getParents();
+
+    /**
+     * @param ThemeInterface $theme
+     */
+    public function addParent(ThemeInterface $theme);
+
+    /**
+     * @param ThemeInterface $theme
+     */
+    public function removeParent(ThemeInterface $theme);
+
+    /**
+     * @return ThemeScreenshot[]
+     */
+    public function getScreenshots();
+
+    /**
+     * @param ThemeScreenshot $screenshot
+     */
+    public function addScreenshot(ThemeScreenshot $screenshot);
+
+    /**
+     * @param ThemeScreenshot $screenshot
+     */
+    public function removeScreenshot(ThemeScreenshot $screenshot);
 }

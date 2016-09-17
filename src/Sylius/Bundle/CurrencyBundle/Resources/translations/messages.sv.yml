@@ -2,6 +2,9 @@
 # (c) Paweł Jędrzejewski
 
 sylius:
-  form:
-    currency:
-      enabled: Aktiverad
+    form:
+        currency:
+            exchange_rate: Växlingskurs
+            enabled: Aktiverad
+            base: Basvaluta
+            code: Namn

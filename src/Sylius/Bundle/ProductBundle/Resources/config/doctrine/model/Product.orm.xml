@@ -18,6 +18,7 @@
         <id name="id" column="id" type="integer">
             <generator strategy="AUTO" />
         </id>
+        <field name="code" column="code" type="string" unique="true" nullable="false"/>
 
         <field name="availableOn" column="available_on" type="datetime" nullable="true">
             <gedmo:versioned />
@@ -26,10 +27,6 @@
         <field name="availableUntil" column="available_until" type="datetime" nullable="true">
             <gedmo:versioned />
         </field>
-
-        <many-to-one field="archetype" target-entity="Sylius\Component\Product\Model\ArchetypeInterface">
-            <join-column name="archetype_id" referenced-column-name="id" nullable="true" />
-        </many-to-one>
 
         <one-to-many field="attributes" target-entity="Sylius\Component\Product\Model\AttributeValueInterface" mapped-by="subject" orphan-removal="true">
             <cascade>
@@ -73,10 +70,8 @@
         <field name="updatedAt" column="updated_at" type="datetime" nullable="true">
             <gedmo:timestampable on="update"/>
         </field>
-        <field name="deletedAt" column="deleted_at" type="datetime" nullable="true" />
         <field name="enabled" column="enabled" type="boolean" />
 
-        <gedmo:soft-deleteable field-name="deletedAt" />
         <gedmo:loggable />
     </mapped-superclass>
 

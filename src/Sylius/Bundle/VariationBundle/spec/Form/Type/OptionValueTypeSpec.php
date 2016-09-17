@@ -21,7 +21,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 /**
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
-class OptionValueTypeSpec extends ObjectBehavior
+final class OptionValueTypeSpec extends ObjectBehavior
 {
     function let()
     {
@@ -41,7 +41,7 @@ class OptionValueTypeSpec extends ObjectBehavior
     function it_builds_form_with_value_field(FormBuilder $builder)
     {
         $builder
-            ->add('translations', 'a2lix_translationsForms', Argument::any())
+            ->add('translations', 'sylius_translations', Argument::any())
             ->shouldBeCalled()
             ->willReturn($builder)
         ;

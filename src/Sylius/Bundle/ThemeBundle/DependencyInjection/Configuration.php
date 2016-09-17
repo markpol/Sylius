@@ -11,14 +11,29 @@
 
 namespace Sylius\Bundle\ThemeBundle\DependencyInjection;
 
+use Sylius\Bundle\ThemeBundle\Configuration\ConfigurationSourceFactoryInterface;
+use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
 /**
  * @author Kamil Kokot <kamil.kokot@lakion.com>
  */
-class Configuration implements ConfigurationInterface
+final class Configuration implements ConfigurationInterface
 {
+    /**
+     * @var ConfigurationSourceFactoryInterface[]
+     */
+    private $configurationSourceFactories;
+
+    /**
+     * @param ConfigurationSourceFactoryInterface[] $configurationSourceFactories
+     */
+    public function __construct(array $configurationSourceFactories = [])
+    {
+        $this->configurationSourceFactories = $configurationSourceFactories;
+    }
+
     /**
      * {@inheritdoc}
      */
@@ -27,20 +42,47 @@ class Configuration implements ConfigurationInterface
         $treeBuilder = new TreeBuilder();
         $rootNode = $treeBuilder->root('sylius_theme');
 
-        $sourcesNodeBuilder = $rootNode->addDefaultsIfNotSet()->fixXmlConfig('source')->children()->arrayNode('sources')->addDefaultsIfNotSet()->children();
+        $this->addSourcesConfiguration($rootNode);
 
-        $sourcesNodeBuilder
-            ->arrayNode('filesystem')
-                ->addDefaultsIfNotSet()
-                ->fixXmlConfig('location')
-                    ->children()
-                        ->arrayNode('locations')
-                            ->requiresAtLeastOneElement()
-                            ->performNoDeepMerging()
-                            ->defaultValue(['%kernel.root_dir%/themes', '%kernel.root_dir%/../vendor/sylius/themes'])
-                            ->prototype('scalar')
+        $rootNode
+            ->children()
+                ->arrayNode('assets')
+                    ->canBeDisabled()
+                ->end()
+                ->arrayNode('templating')
+                    ->canBeDisabled()
+                ->end()
+                ->arrayNode('translations')
+                    ->canBeDisabled()
+                ->end()
+                ->scalarNode('context')
+                    ->defaultValue('sylius.theme.context.settable')
+                    ->cannotBeEmpty()
+                ->end()
         ;
 
         return $treeBuilder;
+    }
+
+    /**
+     * @param ArrayNodeDefinition $rootNode
+     */
+    private function addSourcesConfiguration(ArrayNodeDefinition $rootNode)
+    {
+        $sourcesNodeBuilder = $rootNode
+            ->fixXmlConfig('source')
+                ->children()
+                    ->arrayNode('sources')
+                            ->children()
+        ;
+
+        foreach ($this->configurationSourceFactories as $sourceFactory) {
+            $sourceNode = $sourcesNodeBuilder
+                ->arrayNode($sourceFactory->getName())
+                ->canBeEnabled()
+            ;
+
+            $sourceFactory->buildConfiguration($sourceNode);
+        }
     }
 }

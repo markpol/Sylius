@@ -11,11 +11,7 @@
 
 namespace Sylius\Bundle\UserBundle\Doctrine\ORM;
 
-use Doctrine\ORM\NonUniqueResultException;
-use Doctrine\ORM\QueryBuilder;
-use Pagerfanta\Pagerfanta;
 use Sylius\Bundle\ResourceBundle\Doctrine\ORM\EntityRepository;
-use Sylius\Component\Core\Model\UserInterface;
 use Sylius\Component\User\Repository\UserRepositoryInterface;
 
 /**
@@ -25,88 +21,19 @@ use Sylius\Component\User\Repository\UserRepositoryInterface;
 class UserRepository extends EntityRepository implements UserRepositoryInterface
 {
     /**
-     * @param array $criteria
-     * @param array $sorting
-     * @param bool  $deleted
-     *
-     * @return Pagerfanta
-     */
-    public function createFilterPaginator($criteria = [], $sorting = [], $deleted = false)
-    {
-        $queryBuilder = parent::getCollectionQueryBuilder();
-
-        if ($deleted) {
-            $this->_em->getFilters()->disable('softdeleteable');
-        }
-
-        if (isset($criteria['query'])) {
-            $queryBuilder
-                ->leftJoin($this->getAlias().'.customer', 'customer')
-                ->where('customer.emailCanonical LIKE :query')
-                ->orWhere('customer.firstName LIKE :query')
-                ->orWhere('customer.lastName LIKE :query')
-                ->orWhere($this->getAlias().'.username LIKE :query')
-                ->setParameter('query', '%'.$criteria['query'].'%')
-            ;
-        }
-        if (isset($criteria['enabled'])) {
-            $queryBuilder
-                ->andWhere('o.enabled = :enabled')
-                ->setParameter('enabled', $criteria['enabled'])
-            ;
-        }
-
-        if (empty($sorting)) {
-            if (!is_array($sorting)) {
-                $sorting = [];
-            }
-            $sorting['updatedAt'] = 'desc';
-        }
-
-        $this->applySorting($queryBuilder, $sorting);
-
-        return $this->getPaginator($queryBuilder);
-    }
-
-    /**
-     * Get the user data for the details page.
-     *
-     * @param int $id
-     *
-     * @return null|UserInterface
-     */
-    public function findForDetailsPage($id)
-    {
-        $this->_em->getFilters()->disable('softdeleteable');
-
-        $queryBuilder = $this->getQueryBuilder();
-        $queryBuilder
-            ->leftJoin($this->getAlias().'.customer', 'customer')
-            ->addSelect('customer')
-            ->where($queryBuilder->expr()->eq($this->getAlias().'.id', ':id'))
-            ->setParameter('id', $id)
-        ;
-
-        $result = $queryBuilder
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
-
-        $this->_em->getFilters()->enable('softdeleteable');
-
-        return $result;
-    }
-
-    /**
-     * @param \DateTime   $from
-     * @param \DateTime   $to
-     * @param null|string $status
-     *
-     * @return mixed
+     * {@inheritdoc}
      */
     public function countBetweenDates(\DateTime $from, \DateTime $to, $status = null)
     {
-        $queryBuilder = $this->getCollectionQueryBuilderBetweenDates($from, $to);
+        $queryBuilder = $this->createQueryBuilder('o');
+
+        $queryBuilder
+            ->andWhere($queryBuilder->expr()->gte('o.createdAt', ':from'))
+            ->andWhere($queryBuilder->expr()->lte('o.createdAt', ':to'))
+            ->setParameter('from', $from)
+            ->setParameter('to', $to)
+        ;
+
         if (null !== $status) {
             $queryBuilder
                 ->andWhere('o.status = :status')
@@ -122,9 +49,7 @@ class UserRepository extends EntityRepository implements UserRepositoryInterface
     }
 
     /**
-     * @param array $configuration
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function getRegistrationStatistic(array $configuration = [])
     {
@@ -136,10 +61,11 @@ class UserRepository extends EntityRepository implements UserRepositoryInterface
         $groupBy = str_replace(' ', ', ', $groupBy);
 
         $queryBuilder = $this->getEntityManager()->getConnection()->createQueryBuilder();
+        $tableName = $this->getEntityManager()->getClassMetadata($this->_entityName)->getTableName();
 
         $queryBuilder
             ->select('DATE(u.created_at) as date', ' count(u.id) as user_total')
-            ->from('sylius_user', 'u')
+            ->from($tableName, 'u')
             ->where($queryBuilder->expr()->gte('u.created_at', ':from'))
             ->andWhere($queryBuilder->expr()->lte('u.created_at', ':to'))
             ->setParameter('from', $configuration['start']->format('Y-m-d H:i:s'))
@@ -150,47 +76,25 @@ class UserRepository extends EntityRepository implements UserRepositoryInterface
 
         return $queryBuilder
             ->execute()
-            ->fetchAll();
+            ->fetchAll()
+        ;
     }
 
     /**
-     * @param string $email
-     *
-     * @return mixed
-     *
-     * @throws NonUniqueResultException
+     * {@inheritdoc}
      */
     public function findOneByEmail($email)
     {
-        $queryBuilder = $this->getQueryBuilder();
+        $queryBuilder = $this->createQueryBuilder('o');
 
         $queryBuilder
-            ->leftJoin($this->getAlias().'.customer', 'customer')
-            ->andWhere($queryBuilder->expr()->eq('customer.emailCanonical', ':email'))
+            ->andWhere($queryBuilder->expr()->eq('o.emailCanonical', ':email'))
             ->setParameter('email', $email)
         ;
 
         return $queryBuilder
             ->getQuery()
             ->getOneOrNullResult()
-        ;
-    }
-
-    /**
-     * @param \DateTime $from
-     * @param \DateTime $to
-     *
-     * @return QueryBuilder
-     */
-    protected function getCollectionQueryBuilderBetweenDates(\DateTime $from, \DateTime $to)
-    {
-        $queryBuilder = $this->getCollectionQueryBuilder();
-
-        return $queryBuilder
-            ->andWhere($queryBuilder->expr()->gte('o.createdAt', ':from'))
-            ->andWhere($queryBuilder->expr()->lte('o.createdAt', ':to'))
-            ->setParameter('from', $from)
-            ->setParameter('to', $to)
         ;
     }
 }

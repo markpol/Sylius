@@ -2,15 +2,14 @@
 # (c) Paweł Jędrzejewski
 
 sylius:
-  form:
-    user:
-      email: Имейл
-    customer:
-      email: Имейл
-    user_change_password:
-      confirmation: Потвърждение
-      current: Текуща парола
-      new: Нова парола
-    user_reset_password:
-      confirmation: Потвърждение
-      new: Нова парола
+    form:
+        user:
+            email: Имейл
+            username: Потребителско име
+        user_change_password:
+            confirmation: Потвърждение
+            current: Текуща парола
+            new: Нова парола
+        user_reset_password:
+            confirmation: Потвърждение
+            new: Нова парола

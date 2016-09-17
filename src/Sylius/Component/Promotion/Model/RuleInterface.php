@@ -18,9 +18,6 @@ use Sylius\Component\Resource\Model\ResourceInterface;
  */
 interface RuleInterface extends ResourceInterface
 {
-    const TYPE_ITEM_TOTAL = 'item_total';
-    const TYPE_ITEM_COUNT = 'item_count';
-
     /**
      * @return string
      */

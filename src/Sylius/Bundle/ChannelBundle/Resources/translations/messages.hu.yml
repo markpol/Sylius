@@ -2,8 +2,10 @@
 # (c) Paweł Jędrzejewski
 
 sylius:
-  form:
-    channel:
-      name: Név
-      description: Leírás
-      enabled: Engedélyezve
+    form:
+        channel:
+            name: Név
+            description: Leírás
+            url: Webcím
+            enabled: Engedélyezve
+            color: Szín

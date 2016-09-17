@@ -7,37 +7,37 @@
     "license": "MIT",
     "authors": [
         {
-            "name":     "Paweł Jędrzejewski",
+            "name": "Paweł Jędrzejewski",
             "homepage": "http://pjedrzejewski.com"
         },
         {
-            "name":     "Michał Marcinkowski",
-            "email":    "michal.marcinkowski@lakion.com"
+            "name": "Michał Marcinkowski",
+            "email": "michal.marcinkowski@lakion.com"
         },
         {
-            "name":     "Łukasz Chruściel",
-            "email":    "lukasz.chrusciel@lakion.com"
+            "name": "Łukasz Chruściel",
+            "email": "lukasz.chrusciel@lakion.com"
         },
         {
-            "name":     "Sylius project",
+            "name": "Sylius project",
             "homepage": "http://sylius.org"
         },
         {
-            "name":     "Community contributions",
+            "name": "Community contributions",
             "homepage": "http://github.com/Sylius/Sylius/contributors"
         }
     ],
     "require": {
-        "php": "^5.5.9|^7.0",
+        "php": "^5.6|^7.0",
 
         "doctrine/orm": "^2.4.8,<2.5",
-        "sylius/resource": "0.17.*",
-        "sylius/storage": "0.17.*",
-        "symfony/security": "^2.7",
+        "sylius/resource": "^1.0",
+        "sylius/storage": "^1.0",
+        "symfony/security": "^2.8",
         "symfony/polyfill-mbstring": "~1.0"
     },
     "require-dev": {
-        "phpspec/phpspec": "^2.4"
+        "phpspec/phpspec": "^3.0"
     },
     "suggest": {
         "ext-mbstring": "For better performance than using Symfony Polyfill Component"
@@ -52,9 +52,16 @@
         "psr-4": { "Sylius\\Component\\User\\spec\\": "spec/" }
     },
     "minimum-stability": "dev",
+    "prefer-stable": true,
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../../*/*"
+        }
+    ],
     "extra": {
         "branch-alias": {
-            "dev-master": "0.17-dev"
+            "dev-master": "1.0-dev"
         }
     }
 }

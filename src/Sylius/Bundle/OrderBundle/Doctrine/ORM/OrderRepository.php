@@ -15,8 +15,6 @@ use Sylius\Bundle\ResourceBundle\Doctrine\ORM\EntityRepository;
 use Sylius\Component\Order\Repository\OrderRepositoryInterface;
 
 /**
- * Order repository.
- *
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
 class OrderRepository extends EntityRepository implements OrderRepositoryInterface
@@ -24,15 +22,45 @@ class OrderRepository extends EntityRepository implements OrderRepositoryInterfa
     /**
      * {@inheritdoc}
      */
-    public function findRecentOrders($amount = 10)
+    public function count()
     {
-        $queryBuilder = $this->getQueryBuilder();
+        $queryBuilder = $this->createQueryBuilder('o');
 
-        $this->_em->getFilters()->disable('softdeleteable');
+        return (int) $queryBuilder
+            ->select('COUNT(o.id)')
+            ->andWhere($queryBuilder->expr()->isNotNull('o.completedAt'))
+            ->getQuery()
+            ->getSingleScalarResult()
+        ;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getTotalSales()
+    {
+        $queryBuilder = $this->createQueryBuilder('o');
+
+        return (int) $queryBuilder
+            ->select('SUM(o.total)')
+            ->andWhere($queryBuilder->expr()->isNotNull('o.completedAt'))
+            ->getQuery()
+            ->getSingleScalarResult()
+        ;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function findLatest($count)
+    {
+        $queryBuilder = $this->createQueryBuilder('o');
 
         return $queryBuilder
+            ->addSelect('item')
+            ->leftJoin('o.items', 'item')
             ->andWhere($queryBuilder->expr()->isNotNull('o.completedAt'))
-            ->setMaxResults($amount)
+            ->setMaxResults($count)
             ->orderBy('o.completedAt', 'desc')
             ->getQuery()
             ->getResult()
@@ -56,11 +84,19 @@ class OrderRepository extends EntityRepository implements OrderRepositoryInterfa
     /**
      * {@inheritdoc}
      */
-    protected function getQueryBuilder()
+    public function findOneByNumber($orderNumber)
     {
-        return parent::getQueryBuilder()
-            ->leftJoin('o.items', 'item')
-            ->addSelect('item')
+        $queryBuilder = $this->createQueryBuilder('o');
+
+        $queryBuilder
+            ->andWhere($queryBuilder->expr()->isNotNull('o.completedAt'))
+            ->andWhere('o.number = :orderNumber')
+            ->setParameter('orderNumber', $orderNumber)
+        ;
+
+        return $queryBuilder
+            ->getQuery()
+            ->getOneOrNullResult()
         ;
     }
 }

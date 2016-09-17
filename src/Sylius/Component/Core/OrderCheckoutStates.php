@@ -14,12 +14,15 @@ namespace Sylius\Component\Core;
 /**
  * @author Mateusz Zalewski <mateusz.zalewski@lakion.com>
  */
-class OrderCheckoutStates
+final class OrderCheckoutStates
 {
     const STATE_ADDRESSED = 'addressed';
     const STATE_CART = 'cart';
     const STATE_COMPLETED = 'completed';
     const STATE_PAYMENT_SELECTED = 'payment_selected';
     const STATE_SHIPPING_SELECTED = 'shipping_selected';
-    const STATE_STARTED = 'started';
+
+    private function __construct()
+    {
+    }
 }

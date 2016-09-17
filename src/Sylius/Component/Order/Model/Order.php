@@ -13,7 +13,6 @@ namespace Sylius\Component\Order\Model;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Sylius\Component\Resource\Model\SoftDeletableTrait;
 use Sylius\Component\Resource\Model\TimestampableTrait;
 
 /**
@@ -21,7 +20,7 @@ use Sylius\Component\Resource\Model\TimestampableTrait;
  */
 class Order implements OrderInterface
 {
-    use SoftDeletableTrait, TimestampableTrait;
+    use TimestampableTrait;
 
     /**
      * @var mixed
@@ -41,7 +40,7 @@ class Order implements OrderInterface
     /**
      * @var string
      */
-    protected $additionalInformation;
+    protected $notes;
 
     /**
      * @var Collection|OrderItemInterface[]
@@ -62,11 +61,6 @@ class Order implements OrderInterface
      * @var Collection|CommentInterface[]
      */
     protected $comments;
-
-    /**
-     * @var Collection|IdentityInterface[]
-     */
-    protected $identities;
 
     /**
      * @var int
@@ -91,7 +85,6 @@ class Order implements OrderInterface
         $this->items = new ArrayCollection();
         $this->adjustments = new ArrayCollection();
         $this->comments = new ArrayCollection();
-        $this->identities = new ArrayCollection();
         $this->createdAt = new \DateTime();
     }
 
@@ -154,9 +147,17 @@ class Order implements OrderInterface
     /**
      * {@inheritdoc}
      */
-    public function getSequenceType()
+    public function getNotes()
     {
-        return 'order';
+        return $this->notes;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setNotes($notes)
+    {
+        $this->notes = $notes;
     }
 
     /**
@@ -207,11 +208,10 @@ class Order implements OrderInterface
     public function removeItem(OrderItemInterface $item)
     {
         if ($this->hasItem($item)) {
-            $item->setOrder(null);
             $this->items->removeElement($item);
             $this->itemsTotal -= $item->getTotal();
-
             $this->recalculateTotal();
+            $item->setOrder(null);
         }
     }
 
@@ -301,14 +301,6 @@ class Order implements OrderInterface
     /**
      * {@inheritdoc}
      */
-    public function getTotalItems()
-    {
-        return $this->countItems();
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function getTotalQuantity()
     {
         $quantity = 0;
@@ -326,45 +318,6 @@ class Order implements OrderInterface
     public function isEmpty()
     {
         return $this->items->isEmpty();
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function addIdentity(IdentityInterface $identity)
-    {
-        if (!$this->hasIdentity($identity)) {
-            $this->identities->add($identity);
-
-            $identity->setOrder($this);
-        }
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function hasIdentity(IdentityInterface $identity)
-    {
-        return $this->identities->contains($identity);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getIdentities()
-    {
-        return $this->identities;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function removeIdentity(IdentityInterface $identity)
-    {
-        if ($this->hasIdentity($identity)) {
-            $identity->setOrder(null);
-            $this->identities->removeElement($identity);
-        }
     }
 
     /**
@@ -437,7 +390,9 @@ class Order implements OrderInterface
 
         $total = 0;
         foreach ($this->getAdjustments($type) as $adjustment) {
-            $total += $adjustment->getAmount();
+            if (!$adjustment->isNeutral()) {
+                $total += $adjustment->getAmount();
+            }
         }
 
         return $total;
@@ -450,7 +405,9 @@ class Order implements OrderInterface
     {
         $total = 0;
         foreach ($this->getAdjustmentsRecursively($type) as $adjustment) {
-            $total += $adjustment->getAmount();
+            if (!$adjustment->isNeutral()) {
+                $total += $adjustment->getAmount();
+            }
         }
 
         return $total;
@@ -473,10 +430,12 @@ class Order implements OrderInterface
     /**
      * {@inheritdoc}
      */
-    public function clearAdjustments()
+    public function removeAdjustmentsRecursively($type = null)
     {
-        $this->adjustments->clear();
-        $this->recalculateAdjustmentsTotal();
+        $this->removeAdjustments($type);
+        foreach ($this->items as $item) {
+            $item->removeAdjustmentsRecursively($type);
+        }
     }
 
     /**
@@ -528,21 +487,5 @@ class Order implements OrderInterface
             $this->adjustmentsTotal -= $adjustment->getAmount();
             $this->recalculateTotal();
         }
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getAdditionalInformation()
-    {
-        return $this->additionalInformation;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function setAdditionalInformation($information)
-    {
-        $this->additionalInformation = $information;
     }
 }
