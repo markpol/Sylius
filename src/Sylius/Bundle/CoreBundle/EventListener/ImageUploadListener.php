@@ -11,96 +11,46 @@
 
 namespace Sylius\Bundle\CoreBundle\EventListener;
 
-use Sylius\Component\Core\Model\ProductInterface;
-use Sylius\Component\Core\Model\ProductVariantInterface;
+use Sylius\Component\Core\Model\ImageAwareInterface;
 use Sylius\Component\Core\Uploader\ImageUploaderInterface;
-use Sylius\Component\Variation\Resolver\VariantResolverInterface;
-use Sylius\Component\Core\Model\TaxonInterface;
 use Symfony\Component\EventDispatcher\GenericEvent;
 use Webmozart\Assert\Assert;
 
-class ImageUploadListener
+/**
+ * @author Grzegorz Sadowski <grzegorz.sadowski@lakion.com>
+ */
+final class ImageUploadListener
 {
     /**
      * @var ImageUploaderInterface
      */
-    protected $uploader;
-
-    /**
-     * @var VariantResolverInterface
-     */
-    protected $variantResolver;
+    private $uploader;
 
     /**
      * @param ImageUploaderInterface $uploader
-     * @param VariantResolverInterface $variantResolver
      */
-    public function __construct(ImageUploaderInterface $uploader, VariantResolverInterface $variantResolver)
+    public function __construct(ImageUploaderInterface $uploader)
     {
         $this->uploader = $uploader;
-        $this->variantResolver = $variantResolver;
     }
 
     /**
      * @param GenericEvent $event
      */
-    public function uploadProductVariantImage(GenericEvent $event)
+    public function uploadImage(GenericEvent $event)
     {
         $subject = $event->getSubject();
-        Assert::isInstanceOf($subject, ProductVariantInterface::class);
+        Assert::isInstanceOf($subject, ImageAwareInterface::class);
 
-        $this->uploadProductVariantImages($subject);
+        $this->uploadImages($subject);
     }
 
     /**
-     * @param GenericEvent $event
+     * @param ImageAwareInterface $subject
      */
-    public function uploadProductImage(GenericEvent $event)
+    private function uploadImages(ImageAwareInterface $subject)
     {
-        $subject = $event->getSubject();
-        Assert::isInstanceOf($subject, ProductInterface::class);
-
-        if ($subject->isSimple()) {
-            $variant = $this->variantResolver->getVariant($subject);
-            $this->uploadProductVariantImages($variant);
-        }
-    }
-
-    /**
-     * @param GenericEvent $event
-     */
-    public function uploadTaxonImage(GenericEvent $event)
-    {
-        $subject = $event->getSubject();
-        Assert::isInstanceOf($subject, TaxonInterface::class);
-
-        $this->uploadTaxonImages($subject);
-    }
-
-    /**
-     * @param TaxonInterface $taxon
-     */
-    private function uploadTaxonImages(TaxonInterface $taxon)
-    {
-        $images = $taxon->getImages();
-        foreach ($images as $image) {
-            if ($image->hasFile()) {
-                $this->uploader->upload($image);
-            }
-
-            // Upload failed? Let's remove that image.
-            if (null === $image->getPath()) {
-                $images->removeElement($image);
-            }
-        }
-    }
-
-    /**
-     * @param ProductVariantInterface $productVariant
-     */
-    private function uploadProductVariantImages(ProductVariantInterface $productVariant)
-    {
-        $images = $productVariant->getImages();
+        $images = $subject->getImages();
         foreach ($images as $image) {
             if ($image->hasFile()) {
                 $this->uploader->upload($image);

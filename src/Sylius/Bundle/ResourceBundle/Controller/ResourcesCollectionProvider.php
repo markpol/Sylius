@@ -14,12 +14,13 @@ namespace Sylius\Bundle\ResourceBundle\Controller;
 use Hateoas\Configuration\Route;
 use Hateoas\Representation\Factory\PagerfantaFactory;
 use Pagerfanta\Pagerfanta;
+use Sylius\Bundle\ResourceBundle\Grid\View\ResourceGridView;
 use Sylius\Component\Resource\Repository\RepositoryInterface;
 
 /**
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
-class ResourcesCollectionProvider implements ResourcesCollectionProviderInterface
+final class ResourcesCollectionProvider implements ResourcesCollectionProviderInterface
 {
     /**
      * @var ResourcesResolverInterface
@@ -47,16 +48,28 @@ class ResourcesCollectionProvider implements ResourcesCollectionProviderInterfac
     public function get(RequestConfiguration $requestConfiguration, RepositoryInterface $repository)
     {
         $resources = $this->resourcesResolver->getResources($requestConfiguration, $repository);
+        $paginationLimits = [];
 
-        if ($resources instanceof Pagerfanta) {
+        if ($resources instanceof ResourceGridView) {
+            $paginator = $resources->getData();
+            $paginationLimits = $resources->getDefinition()->getLimits();
+        } else {
+            $paginator = $resources;
+        }
+
+        if ($paginator instanceof Pagerfanta) {
             $request = $requestConfiguration->getRequest();
-            $resources->setMaxPerPage($requestConfiguration->getPaginationMaxPerPage());
-            $resources->setCurrentPage($request->query->get('page', 1));
+
+            $paginator->setMaxPerPage($request->query->get('limit', reset($paginationLimits) ?: $requestConfiguration->getPaginationMaxPerPage()));
+            $paginator->setCurrentPage($request->query->get('page', 1));
+
+            // This prevents Pagerfanta from querying database from a template
+            $paginator->getCurrentPageResults();
 
             if (!$requestConfiguration->isHtmlRequest()) {
                 $route = new Route($request->attributes->get('_route'), array_merge($request->attributes->get('_route_params'), $request->query->all()));
 
-                return $this->pagerfantaRepresentationFactory->createRepresentation($resources, $route);
+                return $this->pagerfantaRepresentationFactory->createRepresentation($paginator, $route);
             }
         }
 

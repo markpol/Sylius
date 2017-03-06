@@ -11,9 +11,11 @@
 
 namespace Sylius\Component\Core\Factory;
 
+use Sylius\Component\Core\Model\OrderInterface;
+use Sylius\Component\Core\Model\OrderItem;
 use Sylius\Component\Core\Model\ProductInterface;
 use Sylius\Component\Resource\Factory\FactoryInterface;
-use Sylius\Component\Variation\Resolver\VariantResolverInterface;
+use Sylius\Component\Product\Resolver\ProductVariantResolverInterface;
 
 /**
  * @author Grzegorz Sadowski <grzegorz.sadowski@lakion.com>
@@ -26,15 +28,15 @@ final class CartItemFactory implements CartItemFactoryInterface
     private $decoratedFactory;
 
     /**
-     * @var VariantResolverInterface
+     * @var ProductVariantResolverInterface
      */
     private $variantResolver;
 
     /**
      * @param FactoryInterface $decoratedFactory
-     * @param VariantResolverInterface $variantResolver
+     * @param ProductVariantResolverInterface $variantResolver
      */
-    public function __construct(FactoryInterface $decoratedFactory, VariantResolverInterface $variantResolver)
+    public function __construct(FactoryInterface $decoratedFactory, ProductVariantResolverInterface $variantResolver)
     {
         $this->decoratedFactory = $decoratedFactory;
         $this->variantResolver = $variantResolver;
@@ -55,6 +57,18 @@ final class CartItemFactory implements CartItemFactoryInterface
     {
         $cartItem = $this->createNew();
         $cartItem->setVariant($this->variantResolver->getVariant($product));
+
+        return $cartItem;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function createForCart(OrderInterface $order)
+    {
+        /** @var OrderItem $cartItem */
+        $cartItem = $this->createNew();
+        $cartItem->setOrder($order);
 
         return $cartItem;
     }

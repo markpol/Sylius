@@ -1,12 +1,12 @@
-Contributing
-============
+The Contribution Guide
+======================
 
 .. note::
 
     This section is based on the great `Symfony documentation <http://symfony.com/doc/current>`_.
 
-Install to Contribute
----------------------
+How to install Sylius to contribute?
+------------------------------------
 
 Before you start contributing you need to have your own local environment for editing things.
 
@@ -37,15 +37,13 @@ file via an interactive script. Please follow the steps. If you hit enter, the d
     secret (EDITME):
     locale (en_US):
     currency (USD):
-    wkhtmltopdf.bin_path (/usr/bin/wkhtmltopdf):
-    wkhtmltoimage.bin_path (/usr/bin/wkhtmltoimage):
 
 After everything is in place, run the following commands:
 
 .. code-block:: bash
 
     $ cd sylius # Move to the newly created directory
-    $ php app/console sylius:install
+    $ php bin/console sylius:install
 
 The ``sylius:install`` command actually runs several other commands, which will ask you some questions and check if everything is setup to run Sylius properly.
 
@@ -72,11 +70,22 @@ For the contributing process questions, please refer to the `Contributing Guide 
 .. _Gulp: http://gulpjs.com/
 .. _Node.js: https://nodejs.org/en/download/
 
+Contributing Code
+-----------------
+
 .. toctree::
-   :hidden:
+    :hidden:
 
-   code/index
-   community/index
-   documentation/index
+    code/index
 
-.. include:: /contributing/map.rst.inc
+.. include:: /contributing/code/map.rst.inc
+
+Contributing Documentation
+--------------------------
+
+.. toctree::
+    :hidden:
+
+    documentation/index
+
+.. include:: /contributing/documentation/map.rst.inc

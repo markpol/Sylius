@@ -12,6 +12,7 @@
 namespace spec\Sylius\Component\Payment\Model;
 
 use PhpSpec\ObjectBehavior;
+use Sylius\Component\Payment\Model\PaymentMethod;
 use Sylius\Component\Payment\Model\PaymentMethodInterface;
 
 /**
@@ -27,7 +28,7 @@ final class PaymentMethodSpec extends ObjectBehavior
 
     function it_is_initializable()
     {
-        $this->shouldHaveType('Sylius\Component\Payment\Model\PaymentMethod');
+        $this->shouldHaveType(PaymentMethod::class);
     }
 
     function it_implements_sylius_payment_method_interface()
@@ -80,17 +81,6 @@ final class PaymentMethodSpec extends ObjectBehavior
         $this->getInstructions()->shouldReturn('Pay on account: 1100012312');
     }
 
-    function it_has_no_gateway_by_default()
-    {
-        $this->getGateway()->shouldReturn(null);
-    }
-
-    function its_gateway_is_mutable()
-    {
-        $this->setGateway('paypal');
-        $this->getGateway()->shouldReturn('paypal');
-    }
-
     function it_has_no_app_environment_by_default()
     {
         $this->getEnvironment()->shouldReturn(null);
@@ -100,6 +90,17 @@ final class PaymentMethodSpec extends ObjectBehavior
     {
         $this->setEnvironment('dev');
         $this->getEnvironment()->shouldReturn('dev');
+    }
+
+    function it_has_no_position_by_default()
+    {
+        $this->getPosition()->shouldReturn(null);
+    }
+
+    function its_position_is_mutable()
+    {
+        $this->setPosition(10);
+        $this->getPosition()->shouldReturn(10);
     }
 
     function it_is_enabled_by_default()

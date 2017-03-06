@@ -22,7 +22,7 @@ interface CreateConfigurableProductPageInterface extends BaseCreatePageInterface
      * @param string $optionName
      */
     public function selectOption($optionName);
-    
+
     /**
      * @param string $code
      */
@@ -33,4 +33,10 @@ interface CreateConfigurableProductPageInterface extends BaseCreatePageInterface
      * @param string $localeCode
      */
     public function nameItIn($name, $localeCode);
+
+    /**
+     * @param string $path
+     * @param string $type
+     */
+    public function attachImage($path, $type = null);
 }

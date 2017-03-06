@@ -24,8 +24,6 @@ By default it contains the following properties:
 +-----------------+-----------------------------------------------------------------------------+
 | metaDescription | Product's meta description taken from the ``ProductTranslation``            |
 +-----------------+-----------------------------------------------------------------------------+
-| availableOn     | When the product is available                                               |
-+-----------------+-----------------------------------------------------------------------------+
 | attributes      | Attributes assigned to this product                                         |
 +-----------------+-----------------------------------------------------------------------------+
 | variants        | Variants assigned to this product                                           |
@@ -100,8 +98,7 @@ and provides an additional property:
 +-------------+---------------------------------------------------------+
 
 .. note::
-   This model extends the :ref:`component_variation_model_variant`
-   and implements the :ref:`component_product_model_variant-interface`.
+   This model implements the :ref:`component_product_model_variant-interface`.
 
    For more detailed information go to `Sylius API Variant`_.
 

@@ -13,6 +13,8 @@ namespace Sylius\Behat\Page\Admin\ProductVariant;
 
 use Sylius\Behat\Behaviour\ChecksCodeImmutability;
 use Sylius\Behat\Page\Admin\Crud\UpdatePage as BaseUpdatePage;
+use Sylius\Component\Core\Model\ChannelInterface;
+use Sylius\Component\Currency\Model\CurrencyInterface;
 
 /**
  * @author Łukasz Chruściel <lukasz.chrusciel@lakion.com>
@@ -58,11 +60,48 @@ class UpdatePage extends BaseUpdatePage implements UpdatePageInterface
     /**
      * {@inheritdoc}
      */
+    public function getPricingConfigurationForChannelAndCurrencyCalculator(ChannelInterface $channel, CurrencyInterface $currency)
+    {
+        $priceElement = $this->getElement('pricing_configuration')->find('css', sprintf('label:contains("%s %s")', $channel->getCode(), $currency->getCode()))->getParent();
+
+        return $priceElement->find('css', 'input')->getValue();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getPriceForChannel($channelName)
+    {
+        return $this->getElement('price', ['%channel%' => $channelName])->getValue();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getNameInLanguage($language)
+    {
+        return $this->getElement('name', ['%language%' => $language])->getValue();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function specifyCurrentStock($amount)
+    {
+        $this->getElement('on_hand')->setValue($amount);
+    }
+    
+    /**
+     * {@inheritdoc}
+     */
     protected function getDefinedElements()
     {
         return array_merge(parent::getDefinedElements(), [
             'code' => '#sylius_product_variant_code',
-            'price' => '#sylius_product_variant_price',
+            'name' => '#sylius_product_variant_translations_%language%_name',
+            'on_hand' => '#sylius_product_variant_onHand',
+            'price' => '#sylius_product_variant_channelPricings [data-form-collection="item"]:contains("%channel%") input',
+            'pricing_configuration' => '#sylius_calculator_container',
             'tracked' => '#sylius_product_variant_tracked',
         ]);
     }

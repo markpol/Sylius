@@ -17,7 +17,7 @@ use Sylius\Bundle\GridBundle\DependencyInjection\SyliusGridExtension;
 /**
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
-class SyliusGridExtensionTest extends AbstractExtensionTestCase
+final class SyliusGridExtensionTest extends AbstractExtensionTestCase
 {
     /**
      * @test
@@ -46,6 +46,7 @@ class SyliusGridExtensionTest extends AbstractExtensionTestCase
                     ]
                 ],
                 'sorting' => [],
+                'limits' => [10, 25, 50],
                 'fields' => [],
                 'filters' => [],
                 'actions' => [],

@@ -1,0 +1,41 @@
+Sylius\Component\Product\Model\ProductVariant:
+    exclusion_policy: ALL
+    xml_root_name: variant
+    properties:
+        id:
+            expose: true
+            type: integer
+            xml_attribute: true
+            groups: [Default, Detailed, DetailedCart]
+        code:
+            expose: true 
+            type: string 
+            groups: [Default, Detailed, DetailedCart] 
+        position:
+            expose: true 
+            type: integer 
+            groups: [Default, Detailed, DetailedCart] 
+        optionValues:
+            expose: true 
+            type: array 
+            groups: [Default, Detailed, DetailedCart] 
+        translations:
+            expose: true 
+            type: array 
+            groups: [Default, Detailed, DetailedCart] 
+    relations:
+        -   rel: self
+            href:
+                route: sylius_api_product_variant_show
+                parameters:
+                    code: expr(object.getCode())
+                    productCode: expr(object.getProduct().getCode())
+                    version: 1
+        -   rel: product
+            href:
+                route: sylius_api_product_show
+                parameters:
+                    code: expr(object.getProduct().getCode())
+                    version: 1
+            exclusion:
+                groups: [Detailed]

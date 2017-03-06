@@ -32,6 +32,7 @@ sylius:
     country:
         code:
             not_blank: Var god ange landets ISOkod.
+            regex: Landskoden kan enbart bestå av bokstäver, siffror, bindestreck och understreck.
             unique: Landets ISOkod måste vara unik.
     province:
         code:
@@ -45,11 +46,14 @@ sylius:
             not_blank: Ange län.
             unique: Provinsens namn måste vara unik.
     zone:
+        scope:
+            not_blank: Var god ange omfattningen.
         code:
             not_blank: Var god skriv in en zonkod.
+            regex: Zonkod kan enbart bestå av bokstäver, siffror, bindestreck och understreck.
             unique: Zonkoden måste vara unik.
         members:
-            min_count: 'Lägg till minst {{ limit }} zonmedlem.'
+            min_count: Lägg till minst {{ limit }} zonmedlem.
         name:
             max_length: Zonnamn får inte vara längre än 255 tecken|Zonnamn får inte vara längre än 255 tecken.
             min_length: Zonnamnet måste innehålla minst 2 tecken|Zonnamnet måste innehålla minst 2 tecken.
@@ -57,4 +61,5 @@ sylius:
     zone_member:
         code:
             not_blank: Var god välj en zonmedlem.
+            regex: En zonmedlems kod kan endast bestå av bokstäver, siffror, bindestreck och understreck.
         unique: Vald zonmedlem är redan i den här zonen.

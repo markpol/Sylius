@@ -15,11 +15,9 @@ use Sylius\Bundle\ResourceBundle\AbstractResourceBundle;
 use Sylius\Bundle\ResourceBundle\SyliusResourceBundle;
 
 /**
- * Flexible inventory management for Symfony2 applications.
- *
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
-class SyliusInventoryBundle extends AbstractResourceBundle
+final class SyliusInventoryBundle extends AbstractResourceBundle
 {
     /**
      * {@inheritdoc}

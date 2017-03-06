@@ -12,9 +12,12 @@
 namespace Sylius\Behat\Context\Ui\Admin;
 
 use Behat\Behat\Context\Context;
+use Sylius\Behat\Page\Admin\Taxon\CreateForParentPageInterface;
 use Sylius\Behat\Page\Admin\Taxon\CreatePageInterface;
 use Sylius\Behat\Page\Admin\Taxon\UpdatePageInterface;
+use Sylius\Behat\Page\SymfonyPageInterface;
 use Sylius\Behat\Service\Resolver\CurrentPageResolverInterface;
+use Sylius\Behat\Service\SharedStorageInterface;
 use Sylius\Component\Core\Model\TaxonInterface;
 use Webmozart\Assert\Assert;
 
@@ -24,9 +27,19 @@ use Webmozart\Assert\Assert;
 final class ManagingTaxonsContext implements Context
 {
     /**
+     * @var SharedStorageInterface
+     */
+    private $sharedStorage;
+
+    /**
      * @var CreatePageInterface
      */
     private $createPage;
+
+    /**
+     * @var CreateForParentPageInterface
+     */
+    private $createForParentPage;
 
     /**
      * @var UpdatePageInterface
@@ -39,16 +52,22 @@ final class ManagingTaxonsContext implements Context
     private $currentPageResolver;
 
     /**
+     * @param SharedStorageInterface $sharedStorage
      * @param CreatePageInterface $createPage
+     * @param CreateForParentPageInterface $createForParentPage
      * @param UpdatePageInterface $updatePage
      * @param CurrentPageResolverInterface $currentPageResolver
      */
     public function __construct(
+        SharedStorageInterface $sharedStorage,
         CreatePageInterface $createPage,
+        CreateForParentPageInterface $createForParentPage,
         UpdatePageInterface $updatePage,
         CurrentPageResolverInterface $currentPageResolver
     ) {
+        $this->sharedStorage = $sharedStorage;
         $this->createPage = $createPage;
+        $this->createForParentPage = $createForParentPage;
         $this->updatePage = $updatePage;
         $this->currentPageResolver = $currentPageResolver;
     }
@@ -63,35 +82,73 @@ final class ManagingTaxonsContext implements Context
     }
 
     /**
+     * @Given I want to create a new taxon for :taxon
+     */
+    public function iWantToCreateANewTaxonForParent(TaxonInterface $taxon)
+    {
+        $this->createForParentPage->open(['id' => $taxon->getId()]);
+    }
+
+    /**
      * @Given /^I want to modify the ("[^"]+" taxon)$/
      */
     public function iWantToModifyATaxon(TaxonInterface $taxon)
     {
+        $this->sharedStorage->set('taxon', $taxon);
+
         $this->updatePage->open(['id' => $taxon->getId()]);
     }
 
     /**
      * @When I specify its code as :code
+     * @When I do not specify its code
      */
-    public function iSpecifyItsCodeAs($code)
+    public function iSpecifyItsCodeAs($code = null)
     {
         $this->createPage->specifyCode($code);
     }
 
     /**
      * @When I name it :name in :language
+     * @When I rename it to :name in :language
+     * @When I do not specify its name
      */
-    public function iNameItIn($name, $language)
+    public function iNameItIn($name = null, $language = 'en_US')
     {
-        $this->createPage->nameIt($name, $language);
+        $currentPage = $this->resolveCurrentPage();
+
+        $currentPage->nameIt($name, $language);
     }
 
     /**
-     * @When I rename it to :name in :language
+     * @When I set its slug to :slug
+     * @When I do not specify its slug
+     * @When I set its slug to :slug in :language
      */
-    public function iRenameItIn($name, $language)
+    public function iSetItsSlugToIn($slug = null, $language = 'en_US')
     {
-        $this->updatePage->nameIt($name, $language);
+        $currentPage = $this->resolveCurrentPage();
+
+        $currentPage->specifySlug($slug, $language);
+    }
+
+    /**
+     * @Then the slug field should not be editable
+     * @Then the slug field should (also )not be editable in :language
+     */
+    public function theSlugFieldShouldNotBeEditable($language = 'en_US')
+    {
+        Assert::true($this->updatePage->isSlugReadOnly($language));
+    }
+
+    /**
+     * @When I enable slug modification
+     * @When I enable slug modification in :language
+     */
+    public function iEnableSlugModification($language = 'en_US')
+    {
+        $this->updatePage->activateLanguageTab($language);
+        $this->updatePage->enableSlugModification($language);
     }
 
     /**
@@ -103,22 +160,6 @@ final class ManagingTaxonsContext implements Context
     }
 
     /**
-     * @When I specify its permalink as :permalink in :language
-     */
-    public function iSpecifyItsPermalinkAs($permalink, $language)
-    {
-        $this->createPage->specifyPermalink($permalink, $language);
-    }
-
-    /**
-     * @When I change its permalink to :permalink in :language
-     */
-    public function iChangeItsPermalinkToIn($permalink, $language)
-    {
-        $this->updatePage->specifyPermalink($permalink, $language);
-    }
-
-    /**
      * @When I describe it as :description in :language
      */
     public function iDescribeItAs($description, $language)
@@ -127,35 +168,11 @@ final class ManagingTaxonsContext implements Context
     }
 
     /**
-     * @Given /^I choose ("[^"]+" as a parent taxon)$/
-     */
-    public function iChooseAsAParentTaxon(TaxonInterface $taxon)
-    {
-        $this->createPage->chooseParent($taxon);
-    }
-
-    /**
      * @Given /^I change its (parent taxon to "[^"]+")$/
      */
     public function iChangeItsParentTaxonTo(TaxonInterface $taxon)
     {
         $this->updatePage->chooseParent($taxon);
-    }
-
-    /**
-     * @When I do not specify its code
-     */
-    public function iDoNotSpecifyItsCode()
-    {
-        // Intentionally left blank to fulfill context expectation
-    }
-
-    /**
-     * @When I do not specify its name
-     */
-    public function iDoNotSpecifyItsName()
-    {
-        // Intentionally left blank to fulfill context expectation
     }
 
     /**
@@ -191,10 +208,7 @@ final class ManagingTaxonsContext implements Context
     public function theTaxonShouldAppearInTheRegistry(TaxonInterface $taxon)
     {
         $this->updatePage->open(['id' => $taxon->getId()]);
-        Assert::true(
-            $this->updatePage->hasResourceValues(['code' => $taxon->getCode()]),
-            sprintf('Taxon %s should be in the registry.', $taxon->getName())
-        );
+        Assert::true($this->updatePage->hasResourceValues(['code' => $taxon->getCode()]));
     }
 
     /**
@@ -202,10 +216,19 @@ final class ManagingTaxonsContext implements Context
      */
     public function thisTaxonElementShouldBe($element, $value)
     {
-        Assert::true(
-            $this->updatePage->hasResourceValues([$element => $value]),
-            sprintf('Taxon with %s should have %s value.', $element, $value)
-        );
+        Assert::true($this->updatePage->hasResourceValues([$element => $value]));
+    }
+
+    /**
+     * @Then this taxon should have slug :value in :language
+     */
+    public function thisTaxonElementShouldHaveSlugIn($value, $language = null)
+    {
+        if (null !== $language) {
+            $this->updatePage->activateLanguageTab($language);
+        }
+
+        Assert::same($this->updatePage->getSlug($language), $value);
     }
 
     /**
@@ -213,10 +236,17 @@ final class ManagingTaxonsContext implements Context
      */
     public function theCodeFieldShouldBeDisabled()
     {
-        Assert::true(
-            $this->updatePage->isCodeDisabled(),
-            'Code field should be disabled but it is not.'
-        );
+        Assert::true($this->updatePage->isCodeDisabled());
+    }
+
+    /**
+     * @Then /^the slug of the ("[^"]+" taxon) should(?:| still) be "([^"]+)"$/
+     */
+    public function productSlugShouldBe(TaxonInterface $taxon, $slug)
+    {
+        $this->updatePage->open(['id' => $taxon->getId()]);
+
+        Assert::true($this->updatePage->hasResourceValues(['slug' => $slug]));
     }
 
     /**
@@ -224,10 +254,15 @@ final class ManagingTaxonsContext implements Context
      */
     public function thisTaxonShouldBelongsTo(TaxonInterface $taxon)
     {
-        Assert::true(
-            $this->updatePage->hasResourceValues(['parent' => $taxon->getId()]),
-            sprintf('Current taxon should have %s parent taxon.', $taxon->getName())
-        );
+        Assert::true($this->updatePage->hasResourceValues(['parent' => $taxon->getCode()]));
+    }
+
+    /**
+     * @Given it should not belong to any other taxon
+     */
+    public function itShouldNotBelongToAnyOtherTaxon()
+    {
+        Assert::isEmpty($this->updatePage->getParent());
     }
 
     /**
@@ -235,10 +270,19 @@ final class ManagingTaxonsContext implements Context
      */
     public function iShouldBeNotifiedThatTaxonWithThisCodeAlreadyExists()
     {
-        /** @var CreatePageInterface|UpdatePageInterface $currentPage */
-        $currentPage = $this->currentPageResolver->getCurrentPageWithForm([$this->createPage, $this->updatePage]);
+        $currentPage = $this->resolveCurrentPage();
 
         Assert::same($currentPage->getValidationMessage('code'), 'Taxon with given code already exists.');
+    }
+
+    /**
+     * @Then I should be notified that taxon slug must be unique
+     */
+    public function iShouldBeNotifiedThatTaxonSlugMustBeUnique()
+    {
+        $currentPage = $this->resolveCurrentPage();
+
+        Assert::same($currentPage->getValidationMessage('slug'), 'Taxon slug must be unique.');
     }
 
     /**
@@ -246,34 +290,26 @@ final class ManagingTaxonsContext implements Context
      */
     public function iShouldBeNotifiedThatIsRequired($element)
     {
-        /** @var CreatePageInterface|UpdatePageInterface $currentPage */
-        $currentPage = $this->currentPageResolver->getCurrentPageWithForm([$this->createPage, $this->updatePage]);
+        $currentPage = $this->resolveCurrentPage();
 
         Assert::same($currentPage->getValidationMessage($element), sprintf('Please enter taxon %s.', $element));
     }
 
     /**
-     * @Then /^there should still be only one taxon with code "([^"]+)"$/
+     * @Then /^there should(?:| still) be only one taxon with code "([^"]+)"$/
      */
     public function thereShouldStillBeOnlyOneTaxonWithCode($code)
     {
-        Assert::true(
-            $this->updatePage->hasResourceValues(['code' => $code]),
-            sprintf('Taxon with code %s cannot be found.', $code)
-        );
+        Assert::true($this->updatePage->hasResourceValues(['code' => $code]));
     }
 
     /**
-     * @Then /^Taxon named "([^"]+)" should not be added$/
+     * @Then /^taxon named "([^"]+)" should not be added$/
      * @Then the taxon named :name should no longer exist in the registry
      */
     public function taxonNamedShouldNotBeAdded($name)
     {
-        Assert::eq(
-            0,
-            $this->createPage->countTaxonsByName($name),
-            sprintf('Taxon %s should not exist.', $name)
-        );
+        Assert::same($this->createPage->countTaxonsByName($name), 0);
     }
 
     /**
@@ -281,13 +317,7 @@ final class ManagingTaxonsContext implements Context
      */
     public function iShouldSeeTaxonsInTheList($number)
     {
-        $taxonsOnPage = $this->createPage->countTaxons();
-
-        Assert::eq(
-            $number,
-            $taxonsOnPage,
-            sprintf('On list should be %d taxons but get %d.', $number, $taxonsOnPage)
-        );
+        Assert::same($this->createPage->countTaxons(), (int) $number);
     }
 
     /**
@@ -295,52 +325,42 @@ final class ManagingTaxonsContext implements Context
      */
     public function iShouldSeeTheTaxonNamedInTheList($name)
     {
-        Assert::eq(
-            1,
-            $this->createPage->countTaxonsByName($name),
-            sprintf('Taxon %s does not exist or multiple taxons with this name exist.', $name)
-        );
+        Assert::same($this->createPage->countTaxonsByName($name), 1);
     }
 
     /**
-     * @When I attach the :path image with a code :code
+     * @When I attach the :path image with :type type
+     * @When I attach the :path image
      */
-    public function iAttachImageWithACode($path, $code)
+    public function iAttachImageWithType($path, $type = null)
     {
-        /** @var CreatePageInterface|UpdatePageInterface $currentPage */
-        $currentPage = $this->currentPageResolver->getCurrentPageWithForm([$this->createPage, $this->updatePage]);
+        $currentPage = $this->resolveCurrentPage();
 
-        $currentPage->attachImageWithCode($code, $path);
+        $currentPage->attachImage($path, $type);
     }
 
     /**
-     * @Then /^this taxon should have(?:| also) an image with a code "([^"]*)"$/
+     * @Then /^(?:it|this taxon) should(?:| also) have an image with "([^"]*)" type$/
      */
-    public function thisTaxonShouldHaveAnImageWithCode($code)
+    public function thisTaxonShouldHaveAnImageWithType($type)
     {
-        Assert::true(
-            $this->updatePage->isImageWithCodeDisplayed($code),
-            sprintf('Image with a code %s should have been displayed.', $code)
-        );
+        Assert::true($this->updatePage->isImageWithTypeDisplayed($type));
     }
 
     /**
-     * @Then /^this taxon should not have(?:| also) an image with a code "([^"]*)"$/
+     * @Then /^(?:this taxon|it) should not have(?:| also) any images with "([^"]*)" type$/
      */
-    public function thisTaxonShouldNotHaveAnImageWithCode($code)
+    public function thisTaxonShouldNotHaveAnImageWithType($code)
     {
-        Assert::false(
-            $this->updatePage->isImageWithCodeDisplayed($code),
-            sprintf('Image with a code %s should not have been displayed.', $code)
-        );
+        Assert::false($this->updatePage->isImageWithTypeDisplayed($code));
     }
 
     /**
-     * @When /^I remove(?:| also) an image with a code "([^"]*)"$/
+     * @When /^I(?:| also) remove an image with "([^"]*)" type$/
      */
-    public function iRemoveAnImageWithACode($code)
+    public function iRemoveAnImageWithType($code)
     {
-        $this->updatePage->removeImageWithCode($code);
+        $this->updatePage->removeImageWithType($code);
     }
 
     /**
@@ -352,22 +372,51 @@ final class ManagingTaxonsContext implements Context
     }
 
     /**
-     * @Then this taxon should not have images
+     * @Then /^(this taxon) should not have any images$/
      */
-    public function thisTaxonShouldNotHaveImages()
+    public function thisTaxonShouldNotHaveAnyImages(TaxonInterface $taxon)
     {
-        Assert::eq(
-            0,
-            $this->updatePage->countImages(),
-            'This taxon has %2$s, but it should not have.'
-        );
+        $this->iWantToModifyATaxon($taxon);
+
+        Assert::same($this->updatePage->countImages(), 0);
     }
 
     /**
-     * @When I change the image with the :code code to :path
+     * @When I change the image with the :type type to :path
      */
-    public function iChangeItsImageToPathForTheCode($path, $code)
+    public function iChangeItsImageToPathForTheType($path, $type)
     {
-        $this->updatePage->changeImageWithCode($code, $path);
+        $this->updatePage->changeImageWithType($type, $path);
+    }
+
+    /**
+     * @When I change the first image type to :type
+     */
+    public function iChangeTheFirstImageTypeTo($type)
+    {
+        $this->updatePage->modifyFirstImageType($type);
+    }
+
+    /**
+     * @Then /^(this taxon) should have only one image$/
+     * @Then /^(this taxon) should(?:| still) have (\d+) images?$/
+     */
+    public function thereShouldStillBeOnlyOneImageInThisTaxon(TaxonInterface $taxon, $count = 1)
+    {
+        $this->iWantToModifyATaxon($taxon);
+
+        Assert::same($this->updatePage->countImages(), (int) $count);
+    }
+
+    /**
+     * @return SymfonyPageInterface|CreatePageInterface|CreateForParentPageInterface|UpdatePageInterface
+     */
+    private function resolveCurrentPage()
+    {
+        return $this->currentPageResolver->getCurrentPageWithForm([
+            $this->createPage,
+            $this->createForParentPage,
+            $this->updatePage,
+        ]);
     }
 }

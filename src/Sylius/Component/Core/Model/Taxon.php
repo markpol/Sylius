@@ -17,17 +17,15 @@ use Sylius\Component\Resource\Model\TimestampableTrait;
 use Sylius\Component\Taxonomy\Model\Taxon as BaseTaxon;
 use Sylius\Component\Taxonomy\Model\TaxonTranslation;
 
+/**
+ * @author Grzegorz Sadowski <grzegorz.sadowski@lakion.com>
+ */
 class Taxon extends BaseTaxon implements TaxonInterface
 {
     use TimestampableTrait;
 
     /**
-     * @var ArrayCollection
-     */
-    protected $products;
-
-    /**
-     * @var Collection|TaxonImageInterface[]
+     * @var Collection|ImageInterface[]
      */
     protected $images;
 
@@ -43,22 +41,6 @@ class Taxon extends BaseTaxon implements TaxonInterface
     /**
      * {@inheritdoc}
      */
-    public function hasImages()
-    {
-        return !$this->images->isEmpty();
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function hasImage(TaxonImageInterface $image)
-    {
-        return $this->images->contains($image);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function getImages()
     {
         return $this->images;
@@ -67,51 +49,47 @@ class Taxon extends BaseTaxon implements TaxonInterface
     /**
      * {@inheritdoc}
      */
-    public function getImageByCode($code)
+    public function getImagesByType($type)
     {
-        foreach ($this->images as $image) {
-            if ($code === $image->getCode()) {
-                return $image;
-            }
-        }
-
-        return null;
+        return $this->images->filter(function (ImageInterface $image) use ($type) {
+            return $type === $image->getType();
+        });
     }
 
     /**
      * {@inheritdoc}
      */
-    public function addImage(TaxonImageInterface $image)
+    public function hasImages()
     {
-        $image->setTaxon($this);
+        return !$this->images->isEmpty();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function hasImage(ImageInterface $image)
+    {
+        return $this->images->contains($image);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function addImage(ImageInterface $image)
+    {
+        $image->setOwner($this);
         $this->images->add($image);
     }
 
     /**
      * {@inheritdoc}
      */
-    public function removeImage(TaxonImageInterface $image)
+    public function removeImage(ImageInterface $image)
     {
         if ($this->hasImage($image)) {
-            $image->setTaxon(null);
+            $image->setOwner(null);
             $this->images->removeElement($image);
         }
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getProducts()
-    {
-        return $this->products;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function setProducts($products)
-    {
-        $this->products = $products;
     }
 
     /**

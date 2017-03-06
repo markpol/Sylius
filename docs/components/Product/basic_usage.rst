@@ -13,7 +13,6 @@ Creating a product
    $product = new Product();
 
    $product->getCreatedAt(); // Returns the \DateTime when it was created.
-   $product->getAvailableOn(); // By default returns the same value as getCreatedAt.
 
 Product attributes management
 -----------------------------
@@ -68,7 +67,7 @@ Product variants management
 
    <?php
 
-   use Sylius\Component\Product\Model\Variant;
+   use Sylius\Component\Product\Model\ProductVariant;
 
    $variant = new Variant();
    $availableVariant = new Variant();
@@ -125,8 +124,3 @@ Product options management
    $product->setOptions($options);
    $product->hasOptions(); // Returns true.
    $product->getOptions(); // Returns an array containing all inserted options.
-
-.. note::
-   Doesn't matter if you use **Option** objects from this component,
-   the :doc:`/components/Variation/index` or your custom.
-   Every model implementing the :ref:`component_variation_model_option-interface` is supported.

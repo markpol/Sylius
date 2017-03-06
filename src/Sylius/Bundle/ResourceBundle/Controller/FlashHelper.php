@@ -12,15 +12,16 @@
 namespace Sylius\Bundle\ResourceBundle\Controller;
 
 use Sylius\Bundle\ResourceBundle\Event\ResourceControllerEvent;
-use Sylius\Component\Resource\Metadata\MetadataInterface;
 use Sylius\Component\Resource\Model\ResourceInterface;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\Translation\TranslatorBagInterface;
 use Symfony\Component\Translation\TranslatorInterface;
 
 /**
  * @author Paweł Jędrzejewski <pawel@sylius.org>
+ * @author Jan Góralski <jan.goralski@lakion.com>
  */
-class FlashHelper implements FlashHelperInterface
+final class FlashHelper implements FlashHelperInterface
 {
     /**
      * @var SessionInterface
@@ -33,13 +34,20 @@ class FlashHelper implements FlashHelperInterface
     private $translator;
 
     /**
+     * @var string
+     */
+    private $defaultLocale;
+
+    /**
      * @param SessionInterface $session
      * @param TranslatorInterface $translator
+     * @param string $defaultLocale
      */
-    public function __construct(SessionInterface $session, TranslatorInterface $translator)
+    public function __construct(SessionInterface $session, TranslatorInterface $translator, $defaultLocale)
     {
         $this->session = $session;
         $this->translator = $translator;
+        $this->defaultLocale = $defaultLocale;
     }
 
     /**
@@ -47,20 +55,15 @@ class FlashHelper implements FlashHelperInterface
      */
     public function addSuccessFlash(RequestConfiguration $requestConfiguration, $actionName, ResourceInterface $resource = null)
     {
-        $metadata = $requestConfiguration->getMetadata();
-        $flashMessage = $requestConfiguration->getFlashMessage($actionName);
+        $this->addFlashWithType($requestConfiguration, $actionName, 'success');
+    }
 
-        if (false === $flashMessage) {
-            return;
-        }
-
-        $translatedMessage = $this->translateMessage($flashMessage, $metadata);
-
-        if ($flashMessage === $translatedMessage) {
-            $translatedMessage = $this->translateMessage(sprintf('sylius.resource.%s', $actionName), $metadata);
-        }
-
-        $this->session->getBag('flashes')->add('success', $translatedMessage);
+    /**
+     * {@inheritdoc}
+     */
+    public function addErrorFlash(RequestConfiguration $requestConfiguration, $actionName)
+    {
+        $this->addFlashWithType($requestConfiguration, $actionName, 'error');
     }
 
     /**
@@ -68,18 +71,97 @@ class FlashHelper implements FlashHelperInterface
      */
     public function addFlashFromEvent(RequestConfiguration $requestConfiguration, ResourceControllerEvent $event)
     {
-        $translatedMessage = $this->translator->trans($event->getMessage(), $event->getMessageParameters(), 'flashes');
-        $this->session->getBag('flashes')->add($event->getMessageType(), $translatedMessage);
+        $this->addFlash($event->getMessageType(), $event->getMessage(), $event->getMessageParameters());
     }
 
     /**
-     * @param string $flashMessage
-     * @param MetadataInterface $metadata
+     * @param RequestConfiguration $requestConfiguration
+     * @param string $actionName
+     * @param string $type
+     */
+    private function addFlashWithType(RequestConfiguration $requestConfiguration, $actionName, $type)
+    {
+        $metadata = $requestConfiguration->getMetadata();
+        $metadataName = ucfirst($metadata->getHumanizedName());
+        $parameters = ['%resource%' => $metadataName];
+
+        $message = $requestConfiguration->getFlashMessage($actionName);
+        if (false === $message) {
+            return;
+        }
+
+        if ($this->isTranslationDefined($message, $this->defaultLocale, $parameters)) {
+            if (!$this->translator instanceof TranslatorBagInterface) {
+                $this->addFlash($type, $message, $parameters);
+
+                return;
+            }
+
+            $this->addFlash($type, $message);
+
+            return;
+        }
+
+        $this->addFlash(
+            $type,
+            $this->getResourceMessage($actionName),
+            $parameters
+        );
+    }
+
+    /**
+     * @param string $type
+     * @param string $message
+     * @param array $parameters
+     */
+    private function addFlash($type, $message, array $parameters = [])
+    {
+        if (!empty($parameters)) {
+            $message = $this->prepareMessage($message, $parameters);
+        }
+
+        $this->session->getBag('flashes')->add($type, $message);
+    }
+
+    /**
+     * @param string $message
+     * @param array $parameters
+     *
+     * @return array
+     */
+    private function prepareMessage($message, array $parameters)
+    {
+        return [
+            'message' => $message,
+            'parameters' => $parameters,
+        ];
+    }
+
+    /**
+     * @param string $actionName
      *
      * @return string
      */
-    private function translateMessage($flashMessage, MetadataInterface $metadata)
+    private function getResourceMessage($actionName)
     {
-        return $this->translator->trans($flashMessage, ['%resource%' => ucfirst($metadata->getHumanizedName())], 'flashes');
+        return sprintf('sylius.resource.%s', $actionName);
+    }
+
+    /**
+     * @param string $message
+     * @param string $locale
+     * @param array $parameters
+     *
+     * @return bool
+     */
+    private function isTranslationDefined($message, $locale, array $parameters)
+    {
+        if ($this->translator instanceof TranslatorBagInterface) {
+            $defaultCatalogue = $this->translator->getCatalogue($locale);
+
+            return $defaultCatalogue->has($message, 'flashes');
+        }
+
+        return $message !== $this->translator->trans($message, $parameters,'flashes');
     }
 }

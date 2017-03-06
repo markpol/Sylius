@@ -16,7 +16,7 @@ use Sylius\Behat\Page\Admin\Crud\IndexPageInterface;
 use Sylius\Behat\Page\Admin\ProductAttribute\CreatePageInterface;
 use Sylius\Behat\Page\Admin\ProductAttribute\UpdatePageInterface;
 use Sylius\Behat\Service\Resolver\CurrentPageResolverInterface;
-use Sylius\Component\Product\Model\AttributeInterface;
+use Sylius\Component\Product\Model\ProductAttributeInterface;
 use Webmozart\Assert\Assert;
 
 /**
@@ -97,16 +97,21 @@ final class ManagingProductAttributesContext implements Context
     }
 
     /**
+     * @When /^I(?:| also) add material "([^"]+)"/
+     */
+    public function iAddMaterial($materialName)
+    {
+        $this->createPage->addAttributeValue($materialName);
+    }
+
+    /**
      * @Then I should see the product attribute :name in the list
      */
     public function iShouldSeeTheProductAttributeInTheList($name)
     {
         $this->indexPage->open();
 
-        Assert::true(
-            $this->indexPage->isSingleResourceOnPage(['name' => $name]),
-            sprintf('The product attribute with name %s should appear on page, but it does not.', $name)
-        );
+        Assert::true($this->indexPage->isSingleResourceOnPage(['name' => $name]));
     }
 
     /**
@@ -116,19 +121,16 @@ final class ManagingProductAttributesContext implements Context
     {
         $this->indexPage->open();
 
-        Assert::true(
-            $this->indexPage->isSingleResourceWithSpecificElementOnPage(
-                ['name' => $name],
-                sprintf('td span.ui.label:contains("%s")', $type)
-            ),
-            sprintf('The product attribute with name %s and type %s should appear on page, but it does not.', $name, $type)
-        );
+        Assert::true($this->indexPage->isSingleResourceWithSpecificElementOnPage(
+            ['name' => $name],
+            sprintf('td span.ui.label:contains("%s")', $type)
+        ));
     }
 
     /**
      * @When /^I want to edit (this product attribute)$/
      */
-    public function iWantToEditThisAttribute(AttributeInterface $productAttribute)
+    public function iWantToEditThisAttribute(ProductAttributeInterface $productAttribute)
     {
         $this->updatePage->open(['id' => $productAttribute->getId()]);
     }
@@ -155,10 +157,7 @@ final class ManagingProductAttributesContext implements Context
      */
     public function theCodeFieldShouldBeDisabled()
     {
-        Assert::true(
-            $this->updatePage->isCodeDisabled(),
-            'Code field should be disabled, but it does not.'
-        );
+        Assert::true($this->updatePage->isCodeDisabled());
     }
 
     /**
@@ -166,12 +165,9 @@ final class ManagingProductAttributesContext implements Context
      */
     public function theTypeFieldShouldBeDisabled()
     {
-       $currentPage = $this->currentPageResolver->getCurrentPageWithForm([$this->createPage, $this->updatePage]);
+        $currentPage = $this->currentPageResolver->getCurrentPageWithForm([$this->createPage, $this->updatePage]);
 
-        Assert::true(
-            $currentPage->isTypeDisabled(),
-            'Type field should be disabled, but it does not.'
-        );
+        Assert::true($currentPage->isTypeDisabled());
     }
 
     /**
@@ -189,10 +185,7 @@ final class ManagingProductAttributesContext implements Context
     {
         $this->indexPage->open();
 
-        Assert::true(
-            $this->indexPage->isSingleResourceOnPage(['code' => $code]),
-            sprintf('There should be only one product attribute with code %s, but it does not.', $code)
-        );
+        Assert::true($this->indexPage->isSingleResourceOnPage(['code' => $code]));
     }
 
     /**
@@ -218,10 +211,7 @@ final class ManagingProductAttributesContext implements Context
     {
         $this->indexPage->open();
 
-        Assert::false(
-            $this->indexPage->isSingleResourceOnPage([$elementName => $elementValue]),
-            sprintf('There should not be product attribute with %s %s, but it is.', $elementName, $elementValue)
-        );
+        Assert::false($this->indexPage->isSingleResourceOnPage([$elementName => $elementValue]));
     }
 
     /**
@@ -245,17 +235,13 @@ final class ManagingProductAttributesContext implements Context
      */
     public function iShouldSeeCustomersInTheList($amountOfProductAttributes)
     {
-        Assert::same(
-            $amountOfProductAttributes,
-            $this->indexPage->countItems(),
-            sprintf('Amount of product attributes should be equal %s, but is not.', $amountOfProductAttributes)
-        );
+        Assert::same($this->indexPage->countItems(), (int) $amountOfProductAttributes);
     }
 
     /**
      * @When /^I delete (this product attribute)$/
      */
-    public function iDeleteThisProductAttribute(AttributeInterface $productAttribute)
+    public function iDeleteThisProductAttribute(ProductAttributeInterface $productAttribute)
     {
         $this->indexPage->open();
         $this->indexPage->deleteResourceOnPage(['code' => $productAttribute->getCode(), 'name' => $productAttribute->getName()]);
@@ -264,12 +250,29 @@ final class ManagingProductAttributesContext implements Context
     /**
      * @Then /^(this product attribute) should no longer exist in the registry$/
      */
-    public function thisProductAttributeShouldNoLongerExistInTheRegistry(AttributeInterface $productAttribute)
+    public function thisProductAttributeShouldNoLongerExistInTheRegistry(ProductAttributeInterface $productAttribute)
     {
-        Assert::false(
-            $this->indexPage->isSingleResourceOnPage(['code' => $productAttribute->getCode()]),
-            sprintf('Product attribute %s should no exist in the registry, but it does.', $productAttribute->getName())
-        );
+        Assert::false($this->indexPage->isSingleResourceOnPage(['code' => $productAttribute->getCode()]));
+    }
+
+    /**
+     * @Then the first product attribute on the list should have name :name
+     */
+    public function theFirstProductAttributeOnTheListShouldHave($name)
+    {
+        $names = $this->indexPage->getColumnFields('name');
+
+        Assert::same(reset($names), $name);
+    }
+
+    /**
+     * @Then the last product attribute on the list should have name :name
+     */
+    public function theLastProductAttributeOnTheListShouldHave($name)
+    {
+        $names = $this->indexPage->getColumnFields('name');
+
+        Assert::same(end($names), $name);
     }
 
     /**

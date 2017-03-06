@@ -11,36 +11,61 @@
 
 namespace Sylius\Bundle\ProductBundle\Form\Type;
 
+use Sylius\Bundle\ProductBundle\Form\EventSubscriber\BuildAttributesFormSubscriber;
 use Sylius\Bundle\ProductBundle\Form\EventSubscriber\ProductOptionFieldSubscriber;
 use Sylius\Bundle\ProductBundle\Form\EventSubscriber\SimpleProductSubscriber;
 use Sylius\Bundle\ResourceBundle\Form\EventSubscriber\AddCodeFormSubscriber;
 use Sylius\Bundle\ResourceBundle\Form\Type\AbstractResourceType;
-use Sylius\Component\Variation\Resolver\VariantResolverInterface;
+use Sylius\Bundle\ResourceBundle\Form\Type\ResourceTranslationsType;
+use Sylius\Component\Product\Resolver\ProductVariantResolverInterface;
+use Sylius\Component\Resource\Factory\FactoryInterface;
+use Sylius\Component\Resource\Translation\Provider\TranslationLocaleProviderInterface;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
+use Symfony\Component\Form\Extension\Core\Type\CollectionType;
 use Symfony\Component\Form\FormBuilderInterface;
 
 /**
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  * @author Gonzalo Vilaseca <gvilaseca@reiss.co.uk>
  */
-class ProductType extends AbstractResourceType
+final class ProductType extends AbstractResourceType
 {
     /**
-     * @var VariantResolverInterface
+     * @var ProductVariantResolverInterface
      */
     private $variantResolver;
 
     /**
-     * @param string $dataClass FQCN
-     * @param string[] $validationGroups
-     * @param VariantResolverInterface $variantResolver
+     * @var FactoryInterface
      */
-    public function __construct($dataClass, $validationGroups, VariantResolverInterface $variantResolver)
-    {
+    private $attributeValueFactory;
+
+    /**
+     * @var TranslationLocaleProviderInterface
+     */
+    private $localeProvider;
+
+    /**
+     * @param string $dataClass
+     * @param string[] $validationGroups
+     * @param ProductVariantResolverInterface $variantResolver
+     * @param FactoryInterface $attributeValueFactory
+     * @param TranslationLocaleProviderInterface $localeProvider
+     */
+    public function __construct(
+        $dataClass,
+        $validationGroups,
+        ProductVariantResolverInterface $variantResolver,
+        FactoryInterface $attributeValueFactory,
+        TranslationLocaleProviderInterface $localeProvider
+    ) {
         parent::__construct($dataClass, $validationGroups);
 
         $this->variantResolver = $variantResolver;
+        $this->attributeValueFactory = $attributeValueFactory;
+        $this->localeProvider = $localeProvider;
     }
-    
+
     /**
      * {@inheritdoc}
      */
@@ -50,21 +75,25 @@ class ProductType extends AbstractResourceType
             ->addEventSubscriber(new AddCodeFormSubscriber())
             ->addEventSubscriber(new ProductOptionFieldSubscriber($this->variantResolver))
             ->addEventSubscriber(new SimpleProductSubscriber())
-            ->add('enabled', 'checkbox', [
+            ->addEventSubscriber(new BuildAttributesFormSubscriber($this->attributeValueFactory, $this->localeProvider))
+            ->add('enabled', CheckboxType::class, [
                 'required' => false,
                 'label' => 'sylius.form.product.enabled',
             ])
-            ->add('translations', 'sylius_translations', [
-                'type' => 'sylius_product_translation',
+            ->add('translations', ResourceTranslationsType::class, [
+                'entry_type' => ProductTranslationType::class,
                 'label' => 'sylius.form.product.translations',
             ])
-            ->add('attributes', 'collection', [
+            ->add('attributes', CollectionType::class, [
+                'entry_type' => ProductAttributeValueType::class,
                 'required' => false,
-                'type' => 'sylius_product_attribute_value',
-                'prototype' => false,
+                'prototype' => true,
                 'allow_add' => true,
                 'allow_delete' => true,
                 'by_reference' => false,
+                'label' => false,
+            ])
+            ->add('associations', ProductAssociationsType::class, [
                 'label' => false,
             ])
         ;
@@ -73,7 +102,7 @@ class ProductType extends AbstractResourceType
     /**
      * {@inheritdoc}
      */
-    public function getName()
+    public function getBlockPrefix()
     {
         return 'sylius_product';
     }

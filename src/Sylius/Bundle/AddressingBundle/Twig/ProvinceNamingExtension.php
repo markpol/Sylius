@@ -11,6 +11,7 @@
 
 namespace Sylius\Bundle\AddressingBundle\Twig;
 
+use Sylius\Component\Addressing\Model\AddressInterface;
 use Sylius\Component\Addressing\Provider\ProvinceNamingProviderInterface;
 
 /**
@@ -37,36 +38,8 @@ class ProvinceNamingExtension extends \Twig_Extension
     public function getFilters()
     {
         return [
-            new \Twig_SimpleFilter('sylius_province_name', [$this, 'getProvinceName']),
-            new \Twig_SimpleFilter('sylius_province_abbreviation', [$this, 'getProvinceAbbreviation']),
+            new \Twig_SimpleFilter('sylius_province_name', [$this->provinceNamingProvider, 'getName']),
+            new \Twig_SimpleFilter('sylius_province_abbreviation', [$this->provinceNamingProvider, 'getAbbreviation']),
         ];
-    }
-
-    /**
-     * @param string $provinceCode
-     *
-     * @return string
-     */
-    public function getProvinceName($provinceCode)
-    {
-        return $this->provinceNamingProvider->getName($provinceCode);
-    }
-
-    /**
-     * @param string $provinceCode
-     *
-     * @return string
-     */
-    public function getProvinceAbbreviation($provinceCode)
-    {
-        return $this->provinceNamingProvider->getAbbreviation($provinceCode);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getName()
-    {
-        return 'sylius_province_naming';
     }
 }

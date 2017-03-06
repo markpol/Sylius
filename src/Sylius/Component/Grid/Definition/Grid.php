@@ -38,6 +38,11 @@ class Grid
     /**
      * @var array
      */
+    private $limits = [];
+
+    /**
+     * @var array
+     */
     private $fields = [];
 
     /**
@@ -67,11 +72,11 @@ class Grid
      * @param string $driver
      * @param array $driverConfiguration
      *
-     * @return Grid
+     * @return self
      */
     public static function fromCodeAndDriverConfiguration($code, $driver, array $driverConfiguration)
     {
-        return new Grid($code, $driver, $driverConfiguration);
+        return new self($code, $driver, $driverConfiguration);
     }
 
     /**
@@ -125,6 +130,22 @@ class Grid
     /**
      * @return array
      */
+    public function getLimits()
+    {
+        return $this->limits;
+    }
+
+    /**
+     * @param array $limits
+     */
+    public function setLimits(array $limits)
+    {
+        $this->limits = $limits;
+    }
+
+    /**
+     * @return array
+     */
     public function getFields()
     {
         return $this->fields;
@@ -147,6 +168,18 @@ class Grid
     /**
      * @param string $name
      */
+    public function removeField($name)
+    {
+        if ($this->hasField($name)) {
+            unset($this->fields[$name]);
+        }
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return Field
+     */
     public function getField($name)
     {
         if (!$this->hasField($name)) {
@@ -154,6 +187,16 @@ class Grid
         }
 
         return $this->fields[$name];
+    }
+
+    /**
+     * @param Field $field
+     */
+    public function setField(Field $field)
+    {
+        $name = $field->getName();
+
+        $this->fields[$name] = $field;
     }
 
     /**
@@ -191,6 +234,18 @@ class Grid
     /**
      * @param string $name
      */
+    public function removeActionGroup($name)
+    {
+        if ($this->hasActionGroup($name)) {
+            unset($this->actionGroups[$name]);
+        }
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return ActionGroup
+     */
     public function getActionGroup($name)
     {
         if (!$this->hasActionGroup($name)) {
@@ -198,6 +253,16 @@ class Grid
         }
 
         return $this->actionGroups[$name];
+    }
+
+    /**
+     * @param ActionGroup $actionGroup
+     */
+    public function setActionGroup(ActionGroup $actionGroup)
+    {
+        $name = $actionGroup->getName();
+
+        $this->actionGroups[$name] = $actionGroup;
     }
 
     /**
@@ -242,6 +307,16 @@ class Grid
 
     /**
      * @param string $name
+     */
+    public function removeFilter($name)
+    {
+        if ($this->hasFilter($name)) {
+            unset($this->filters[$name]);
+        }
+    }
+
+    /**
+     * @param string $name
      *
      * @return Filter
      */
@@ -252,6 +327,16 @@ class Grid
         }
 
         return $this->filters[$name];
+    }
+
+    /**
+     * @param Filter $filter
+     */
+    public function setFilter(Filter $filter)
+    {
+        $name = $filter->getName();
+
+        $this->filters[$name] = $filter;
     }
 
     /**

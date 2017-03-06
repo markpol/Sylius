@@ -13,11 +13,13 @@ namespace Sylius\Behat\Context\Setup;
 
 use Behat\Behat\Context\Context;
 use Doctrine\Common\Persistence\ObjectManager;
-use Sylius\Component\Core\Model\AddressInterface;
-use Sylius\Component\Core\Model\CustomerInterface;
 use Sylius\Behat\Service\SharedStorageInterface;
-use Sylius\Component\Resource\Factory\FactoryInterface;
+use Sylius\Component\Addressing\Model\CountryInterface;
+use Sylius\Component\Core\Model\Address;
+use Sylius\Component\Core\Model\CustomerInterface;
 use Sylius\Component\Core\Repository\CustomerRepositoryInterface;
+use Sylius\Component\Customer\Model\CustomerGroupInterface;
+use Sylius\Component\Resource\Factory\FactoryInterface;
 
 /**
  * @author Anna Walasek <anna.walasek@lakion.com>
@@ -76,15 +78,18 @@ final class CustomerContext implements Context
     public function theStoreHasCustomerWithNameAndEmail($name, $email)
     {
         $partsOfName = explode(' ', $name);
-        $this->createCustomer($email, $partsOfName[0], $partsOfName[1]);
+        $customer = $this->createCustomer($email, $partsOfName[0], $partsOfName[1]);
+        $this->customerRepository->add($customer);
     }
 
     /**
-     * @Given the store has customer :email
+     * @Given the store (also )has customer :email
      */
     public function theStoreHasCustomer($email)
     {
-        $this->createCustomer($email);
+        $customer = $this->createCustomer($email);
+
+        $this->customerRepository->add($customer);
     }
 
     /**
@@ -92,24 +97,21 @@ final class CustomerContext implements Context
      */
     public function theStoreHasCustomerWithFirstName($email, $firstName)
     {
-        $this->createCustomer($email, $firstName);
-    }
+        $customer = $this->createCustomer($email, $firstName);
 
-    /**
-     * @Given the store has customer :email with last name :lastName
-     */
-    public function theStoreHasCustomerWithLastName($email, $lastName)
-    {
-        $this->createCustomer($email, null, $lastName);
+        $this->customerRepository->add($customer);
     }
 
     /**
      * @Given the store has customer :email with name :fullName since :since
+     * @Given the store has customer :email with name :fullName and phone number :phoneNumber since :since
      */
-    public function theStoreHasCustomerWithNameAndRegistrationDate($email, $fullName, $since)
+    public function theStoreHasCustomerWithNameAndRegistrationDate($email, $fullName, $phoneNumber = null, $since)
     {
         $names = explode(' ', $fullName);
-        $this->createCustomer($email, $names[0], $names[1], new \DateTime($since));
+        $customer = $this->createCustomer($email, $names[0], $names[1], new \DateTime($since), $phoneNumber);
+
+        $this->customerRepository->add($customer);
     }
 
     /**
@@ -117,16 +119,19 @@ final class CustomerContext implements Context
      */
     public function thereIsDisabledCustomerAccountWithPassword($email, $password)
     {
-        $this->createCustomerWithUserAccount($email, $password, false);
+        $customer = $this->createCustomerWithUserAccount($email, $password, false);
+        $this->customerRepository->add($customer);
     }
 
     /**
-     * @Given there is enabled customer account :email with password :password
+     * @Given there is a customer account :email
      * @Given there is a customer account :email identified by :password
+     * @Given there is enabled customer account :email with password :password
      */
-    public function theStoreHasEnabledCustomerAccountWithPassword($email, $password)
+    public function theStoreHasEnabledCustomerAccountWithPassword($email, $password = 'sylius')
     {
-        $this->createCustomerWithUserAccount($email, $password, true);
+        $customer = $this->createCustomerWithUserAccount($email, $password, true);
+        $this->customerRepository->add($customer);
     }
 
     /**
@@ -138,39 +143,56 @@ final class CustomerContext implements Context
         $firstName = $names[0];
         $lastName = count($names) > 1 ? $names[1] : null;
 
-        $this->createCustomerWithUserAccount($email, $password, true, $firstName, $lastName);
+        $customer = $this->createCustomerWithUserAccount($email, $password, true, $firstName, $lastName);
+        $this->customerRepository->add($customer);
     }
 
     /**
-     * @Given there is an administrator :name identified by an email :email and a password :password
+     * @Given /^(the customer) subscribed to the newsletter$/
      */
-    public function thereIsAdministratorIdentifiedByEmailAndPassword($name, $email, $password)
+    public function theCustomerSubscribedToTheNewsletter(CustomerInterface $customer)
     {
-        $names = explode(' ', $name);
-        $firstName = $names[0];
-        $lastName = count($names) > 1 ? $names[1] : null;
-
-        $this->createCustomerWithUserAccount($email, $password, true, $firstName, $lastName, 'ROLE_ADMINISTRATION_ACCESS');
-    }
-
-    /**
-     * @Given /^(his) shipping (address is "(?:[^"]+)", "(?:[^"]+)", "(?:[^"]+)", "(?:[^"]+)" for "(?:[^"]+)")$/
-     */
-    public function heHasShippingAddress(CustomerInterface $customer, AddressInterface $address)
-    {
-        $customer->setShippingAddress($address);
+        $customer->setSubscribedToNewsletter(true);
 
         $this->customerManager->flush();
     }
 
     /**
-     * @Given /^(his) billing (address is "(?:[^"]+)", "(?:[^"]+)", "(?:[^"]+)", "(?:[^"]+)" for "(?:[^"]+)")$/
+     * @Given /^(this customer) verified their email$/
      */
-    public function heHasBillingAddress(CustomerInterface $customer, AddressInterface $address)
+    public function theCustomerVerifiedTheirEmail(CustomerInterface $customer)
     {
-        $customer->setBillingAddress($address);
+        $customer->getUser()->setVerifiedAt(new \DateTime());
 
         $this->customerManager->flush();
+    }
+
+    /**
+     * @Given /^(the customer) belongs to (group "([^"]+)")$/
+     */
+    public function theCustomerBelongsToGroup(CustomerInterface $customer, CustomerGroupInterface $customerGroup)
+    {
+        $customer->setGroup($customerGroup);
+
+        $this->customerManager->flush();
+    }
+
+    /**
+     * @Given there is user :email with :country as shipping country
+     */
+    public function thereIsUserIdentifiedByWithAsShippingCountry($email, CountryInterface $country)
+    {
+        $customer = $this->createCustomerWithUserAccount($email, 'password123', true, 'John', 'Doe');
+        $address = new Address();
+        $address->setCountryCode($country->getCode());
+        $address->setCity('Berlin');
+        $address->setFirstName($customer->getFirstName());
+        $address->setLastName($customer->getLastName());
+        $address->setStreet('street');
+        $address->setPostcode('123');
+        $customer->setDefaultAddress($address);
+
+        $this->customerRepository->add($customer);
     }
 
     /**
@@ -178,21 +200,31 @@ final class CustomerContext implements Context
      * @param string|null $firstName
      * @param string|null $lastName
      * @param \DateTime|null $createdAt
+     * @param string|null $phoneNumber
+     *
+     * @return CustomerInterface
      */
-    private function createCustomer($email, $firstName = null, $lastName = null, \DateTime $createdAt = null)
-    {
+    private function createCustomer(
+        $email,
+        $firstName = null,
+        $lastName = null,
+        \DateTime $createdAt = null,
+        $phoneNumber = null
+    ) {
         /** @var CustomerInterface $customer */
         $customer = $this->customerFactory->createNew();
 
         $customer->setFirstName($firstName);
         $customer->setLastName($lastName);
         $customer->setEmail($email);
+        $customer->setPhoneNumber($phoneNumber);
         if (null !== $createdAt) {
             $customer->setCreatedAt($createdAt);
         }
 
         $this->sharedStorage->set('customer', $customer);
-        $this->customerRepository->add($customer);
+
+        return $customer;
     }
 
     /**
@@ -202,6 +234,8 @@ final class CustomerContext implements Context
      * @param string|null $firstName
      * @param string|null $lastName
      * @param string|null $role
+     *
+     * @return CustomerInterface
      */
     private function createCustomerWithUserAccount(
         $email,
@@ -227,16 +261,7 @@ final class CustomerContext implements Context
         $customer->setUser($user);
 
         $this->sharedStorage->set('customer', $customer);
-        $this->customerRepository->add($customer);
-    }
 
-    /**
-     * @Given /^(the customer) subscribed to the newsletter$/
-     */
-    public function theCustomerSubscribedToTheNewsletter(CustomerInterface $customer)
-    {
-        $customer->setSubscribedToNewsletter(true);
-
-        $this->customerManager->flush();
+        return $customer;
     }
 }

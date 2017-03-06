@@ -18,8 +18,6 @@ use Sylius\Component\Locale\Provider\LocaleProviderInterface;
 use Sylius\Component\Resource\Repository\RepositoryInterface;
 
 /**
- * @mixin LocaleProvider
- *
  * @author Kamil Kokot <kamil.kokot@lakion.com>
  */
 final class LocaleProviderSpec extends ObjectBehavior
@@ -41,18 +39,10 @@ final class LocaleProviderSpec extends ObjectBehavior
 
     function it_returns_all_enabled_locales(RepositoryInterface $localeRepository, LocaleInterface $locale)
     {
-        $localeRepository->findBy(['enabled' => true])->willReturn([$locale]);
-        $locale->getCode()->willReturn('en_US');
-
-        $this->getAvailableLocalesCodes()->shouldReturn(['en_US']);
-    }
-
-    function it_returns_all_defined_locales(RepositoryInterface $localeRepository, LocaleInterface $locale)
-    {
         $localeRepository->findAll()->willReturn([$locale]);
         $locale->getCode()->willReturn('en_US');
 
-        $this->getDefinedLocalesCodes()->shouldReturn(['en_US']);
+        $this->getAvailableLocalesCodes()->shouldReturn(['en_US']);
     }
 
     function it_returns_the_default_locale()

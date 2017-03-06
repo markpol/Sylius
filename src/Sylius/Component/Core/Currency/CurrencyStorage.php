@@ -11,9 +11,9 @@
 
 namespace Sylius\Component\Core\Currency;
 
-use Sylius\Component\Channel\Model\ChannelInterface;
-use Sylius\Component\Currency\Context\CurrencyNotFoundException;
-use Sylius\Component\Storage\StorageInterface;
+use Sylius\Component\Core\Model\ChannelInterface;
+use Sylius\Component\Currency\Model\CurrencyInterface;
+use Sylius\Component\Resource\Storage\StorageInterface;
 
 /**
  * @author Kamil Kokot <kamil.kokot@lakion.com>
@@ -38,7 +38,13 @@ final class CurrencyStorage implements CurrencyStorageInterface
      */
     public function set(ChannelInterface $channel, $currencyCode)
     {
-        $this->storage->setData($this->provideKey($channel), $currencyCode);
+        if ($this->isBaseCurrency($currencyCode, $channel) || !$this->isAvailableCurrency($currencyCode, $channel)) {
+            $this->storage->remove($this->provideKey($channel));
+
+            return;
+        }
+
+        $this->storage->set($this->provideKey($channel), $currencyCode);
     }
 
     /**
@@ -46,12 +52,7 @@ final class CurrencyStorage implements CurrencyStorageInterface
      */
     public function get(ChannelInterface $channel)
     {
-        $currencyCode = $this->storage->getData($this->provideKey($channel));
-        if (null === $currencyCode) {
-            throw new CurrencyNotFoundException('No currency is set for current channel!');
-        }
-
-        return $currencyCode;
+        return $this->storage->get($this->provideKey($channel));
     }
 
     /**
@@ -60,5 +61,34 @@ final class CurrencyStorage implements CurrencyStorageInterface
     private function provideKey(ChannelInterface $channel)
     {
         return '_currency_' . $channel->getCode();
+    }
+
+    /**
+     * @param string$currencyCode
+     * @param ChannelInterface $channel
+     *
+     * @return bool
+     */
+    private function isBaseCurrency($currencyCode, ChannelInterface $channel)
+    {
+        return $currencyCode === $channel->getBaseCurrency()->getCode();
+    }
+
+    /**
+     * @param string $currencyCode
+     * @param ChannelInterface $channel
+     *
+     * @return bool
+     */
+    private function isAvailableCurrency($currencyCode, ChannelInterface $channel)
+    {
+        $availableCurrencies = array_map(
+            function (CurrencyInterface $currency) {
+                return $currency->getCode();
+            },
+            $channel->getCurrencies()->toArray()
+        );
+
+        return in_array($currencyCode, $availableCurrencies, true);
     }
 }

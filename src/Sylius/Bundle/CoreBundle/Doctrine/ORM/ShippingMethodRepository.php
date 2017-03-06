@@ -11,6 +11,7 @@
 
 namespace Sylius\Bundle\CoreBundle\Doctrine\ORM;
 
+use Doctrine\ORM\QueryBuilder;
 use Sylius\Bundle\ShippingBundle\Doctrine\ORM\ShippingMethodRepository as BaseShippingMethodRepository;
 use Sylius\Component\Core\Model\ChannelInterface;
 use Sylius\Component\Core\Repository\ShippingMethodRepositoryInterface;
@@ -23,16 +24,51 @@ class ShippingMethodRepository extends BaseShippingMethodRepository implements S
     /**
      * {@inheritdoc}
      */
-    public function findEnabledForZonesAndChannel(array $zones, ChannelInterface $channel)
+    public function createListQueryBuilder($locale)
     {
         return $this->createQueryBuilder('o')
-            ->where('o.enabled = true')
-            ->andWhere('o IN (:channelShippingMethods)')
-            ->andWhere('o.zone IN (:zones)')
-            ->setParameter('channelShippingMethods', $channel->getShippingMethods()->toArray())
-            ->setParameter('zones', $zones)
+            ->leftJoin('o.translations', 'translation', 'WITH', 'translation.locale = :locale')
+            ->setParameter('locale', $locale)
+        ;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function findEnabledForChannel(ChannelInterface $channel)
+    {
+        return $this->createEnabledForChannelQueryBuilder($channel)
             ->getQuery()
             ->getResult()
+        ;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function findEnabledForZonesAndChannel(array $zones, ChannelInterface $channel)
+    {
+        return $this->createEnabledForChannelQueryBuilder($channel)
+            ->andWhere('o.zone IN (:zones)')
+            ->setParameter('zones', $zones)
+            ->addOrderBy('o.position', 'ASC')
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
+    /**
+     * @param ChannelInterface $channel
+     *
+     * @return QueryBuilder
+     */
+    protected function createEnabledForChannelQueryBuilder(ChannelInterface $channel)
+    {
+        return $this->createQueryBuilder('o')
+            ->andWhere('o.enabled = true')
+            ->andWhere('o.archivedAt IS NULL')
+            ->andWhere(':channel MEMBER OF o.channels')
+            ->setParameter('channel', $channel)
         ;
     }
 }

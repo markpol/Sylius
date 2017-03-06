@@ -14,11 +14,15 @@ namespace Sylius\Behat\Context\Setup;
 use Behat\Behat\Context\Context;
 use Behat\Mink\Element\NodeElement;
 use Doctrine\Common\Persistence\ObjectManager;
-use Sylius\Component\Core\Model\ProductInterface;
+use Sylius\Component\Core\Formatter\StringInflector;
+use Sylius\Component\Core\Model\ImageInterface;
 use Sylius\Component\Core\Model\TaxonInterface;
 use Sylius\Component\Core\Uploader\ImageUploaderInterface;
 use Sylius\Component\Resource\Factory\FactoryInterface;
+use Sylius\Component\Resource\Model\TranslationInterface;
 use Sylius\Component\Resource\Repository\RepositoryInterface;
+use Sylius\Component\Taxonomy\Generator\TaxonSlugGeneratorInterface;
+use Sylius\Component\Taxonomy\Model\TaxonTranslationInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 /**
@@ -39,6 +43,11 @@ final class TaxonomyContext implements Context
     /**
      * @var FactoryInterface
      */
+    private $taxonTranslationFactory;
+
+    /**
+     * @var FactoryInterface
+     */
     private $taxonImageFactory;
 
     /**
@@ -52,6 +61,11 @@ final class TaxonomyContext implements Context
     private $imageUploader;
 
     /**
+     * @var TaxonSlugGeneratorInterface
+     */
+    private $taxonSlugGenerator;
+
+    /**
      * @var array
      */
     private $minkParameters;
@@ -59,24 +73,30 @@ final class TaxonomyContext implements Context
     /**
      * @param RepositoryInterface $taxonRepository
      * @param FactoryInterface $taxonFactory
+     * @param FactoryInterface $taxonTranslationFactory
      * @param FactoryInterface $taxonImageFactory
      * @param ObjectManager $objectManager
      * @param ImageUploaderInterface $imageUploader
+     * @param TaxonSlugGeneratorInterface $taxonSlugGenerator
      * @param array $minkParameters
      */
     public function __construct(
         RepositoryInterface $taxonRepository,
         FactoryInterface $taxonFactory,
+        FactoryInterface $taxonTranslationFactory,
         FactoryInterface $taxonImageFactory,
         ObjectManager $objectManager,
         ImageUploaderInterface $imageUploader,
+        TaxonSlugGeneratorInterface $taxonSlugGenerator,
         array $minkParameters
     ) {
         $this->taxonRepository = $taxonRepository;
         $this->taxonFactory = $taxonFactory;
+        $this->taxonTranslationFactory = $taxonTranslationFactory;
         $this->taxonImageFactory = $taxonImageFactory;
         $this->objectManager = $objectManager;
         $this->imageUploader = $imageUploader;
+        $this->taxonSlugGenerator = $taxonSlugGenerator;
         $this->minkParameters = $minkParameters;
     }
 
@@ -87,41 +107,37 @@ final class TaxonomyContext implements Context
      * @Given the store classifies its products as :firstTaxonName, :secondTaxonName and :thirdTaxonName
      * @Given the store classifies its products as :firstTaxonName, :secondTaxonName, :thirdTaxonName and :fourthTaxonName
      */
-    public function storeClassifiesItsProductsAs(
-        $firstTaxonName,
-        $secondTaxonName = null,
-        $thirdTaxonName = null,
-        $fourthTaxonName = null
-    ) {
-        foreach ([$firstTaxonName, $secondTaxonName, $thirdTaxonName, $fourthTaxonName] as $taxonName) {
-            if (null === $taxonName) {
-                break;
-            }
-
+    public function storeClassifiesItsProductsAs(...$taxonsNames)
+    {
+        foreach ($taxonsNames as $taxonName) {
             $this->taxonRepository->add($this->createTaxon($taxonName));
         }
     }
 
     /**
-     * @Given /^(it|this product) (belongs to "[^"]+")$/
+     * @Given /^the store has taxonomy named "([^"]+)" in ("[^"]+" locale) and "([^"]+)" in ("[^"]+" locale)$/
      */
-    public function itBelongsTo(ProductInterface $product, TaxonInterface $taxon)
+    public function theStoreHasTaxonomyNamedInAndIn($firstName, $firstLocale, $secondName, $secondLocale)
     {
-        $product->addTaxon($taxon);
+        $translationMap = [
+            $firstLocale => $firstName,
+            $secondLocale => $secondName,
+        ];
 
-        $this->objectManager->flush($product);
+        $this->taxonRepository->add($this->createTaxonInManyLanguages($translationMap));
     }
 
     /**
-     * @Given /^the ("[^"]+" taxon) has(?:| also) an image "([^"]+)" with a code "([^"]+)"$/
+     * @Given /^the ("[^"]+" taxon)(?:| also) has an image "([^"]+)" with "([^"]+)" type$/
      */
-    public function theTaxonHasAnImageWithACode(TaxonInterface $taxon, $imagePath, $imageCode)
+    public function theTaxonHasAnImageWithType(TaxonInterface $taxon, $imagePath, $imageType)
     {
         $filesPath = $this->getParameter('files_path');
 
+        /** @var ImageInterface $taxonImage */
         $taxonImage = $this->taxonImageFactory->createNew();
         $taxonImage->setFile(new UploadedFile($filesPath.$imagePath, basename($imagePath)));
-        $taxonImage->setCode($imageCode);
+        $taxonImage->setType($imageType);
         $this->imageUploader->upload($taxonImage);
 
         $taxon->addImage($taxonImage);
@@ -136,21 +152,36 @@ final class TaxonomyContext implements Context
      */
     private function createTaxon($name)
     {
+        /** @var TaxonInterface $taxon */
         $taxon = $this->taxonFactory->createNew();
         $taxon->setName($name);
-        $taxon->setCode($this->getCodeFromName($name));
+        $taxon->setCode(StringInflector::nameToCode($name));
+        $taxon->setSlug($this->taxonSlugGenerator->generate($name));
 
         return $taxon;
     }
 
     /**
-     * @param string $name
+     * @param array $names
      *
-     * @return string
+     * @return TaxonInterface
      */
-    private function getCodeFromName($name)
+    private function createTaxonInManyLanguages(array $names)
     {
-        return str_replace([' ', '-'], '_', strtolower($name));
+        /** @var TaxonInterface $taxon */
+        $taxon = $this->taxonFactory->createNew();
+        $taxon->setCode(StringInflector::nameToCode($names['en_US']));
+        foreach ($names as $locale => $name) {
+            /** @var TranslationInterface|TaxonTranslationInterface $taxonTranslation */
+            $taxonTranslation = $this->taxonTranslationFactory->createNew();
+            $taxonTranslation->setLocale($locale);
+            $taxonTranslation->setName($name);
+            $taxonTranslation->setSlug($this->taxonSlugGenerator->generate($name));
+
+            $taxon->addTranslation($taxonTranslation);
+        }
+
+        return $taxon;
     }
 
     /**

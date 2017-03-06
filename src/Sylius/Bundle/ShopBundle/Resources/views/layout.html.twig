@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 
-<html lang="{{ app.request.locale }}">
+<html lang="{{ app.request.locale|slice(0, 2) }}">
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -19,18 +19,23 @@
 
 <body class="pushable">
 <div class="pusher">
-    <div id="menu" class="ui large sticky inverted stackable menu">
-        {{ render(controller('sylius.controller.shop.currency:renderSelectorAction')) }}
-        {{ render(controller('sylius.controller.shop.locale:renderSelectorAction')) }}
-        {% include '@SyliusShop/Homepage/Menu/_security.html.twig' %}
-    </div>
+    {% block top %}
+        <div id="menu" class="ui large sticky inverted stackable menu">
+            {{ render(controller('sylius.controller.shop.currency_switch:renderAction')) }}
+            {{ render(controller('sylius.controller.shop.locale_switch:renderAction')) }}
+            {{ render(controller('sylius.controller.shop.security_widget:renderAction')) }}
+        </div>
+    {% endblock %}
 
     <div class="ui container">
-        <header>
-            {% include '@SyliusShop/Homepage/_header.html.twig' %}
+        {% block header %}
+            <header>
+                {% include '@SyliusShop/_header.html.twig' %}
 
-            {{ render(url('sylius_shop_partial_taxon_index_by_code', {'code': 'category', 'template': '@SyliusShop/Taxon/_horizontalMenu.html.twig'})) }}
-        </header>
+                {{ render(url('sylius_shop_partial_taxon_index_by_code', {'code': 'category', 'template': '@SyliusShop/Taxon/_horizontalMenu.html.twig'})) }}
+            </header>
+        {% endblock %}
+
         {% include '@SyliusUi/_flashes.html.twig' %}
 
         {% block content %}
@@ -38,12 +43,14 @@
     </div>
 
     {% block footer %}
-        {% include '@SyliusShop/Homepage/_footer.html.twig' %}
+        {% include '@SyliusShop/_footer.html.twig' %}
     {% endblock %}
 </div>
 
 {% block javascripts %}
     {% include '@SyliusUi/_javascripts.html.twig' with {'path': 'assets/shop/js/app.js'} %}
 {% endblock %}
+
+{% include '@SyliusUi/Modal/_confirmation.html.twig' %}
 </body>
 </html>

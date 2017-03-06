@@ -11,17 +11,19 @@
 
 namespace Sylius\Component\Core\Promotion\Checker\Rule;
 
+use Sylius\Bundle\CoreBundle\Form\Type\Promotion\Rule\TotalOfItemsFromTaxonConfigurationType;
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Core\Model\OrderItemInterface;
 use Sylius\Component\Promotion\Checker\Rule\RuleCheckerInterface;
 use Sylius\Component\Promotion\Model\PromotionSubjectInterface;
 use Sylius\Component\Resource\Exception\UnexpectedTypeException;
 use Sylius\Component\Taxonomy\Repository\TaxonRepositoryInterface;
+use Webmozart\Assert\Assert;
 
 /**
  * @author Mateusz Zalewski <mateusz.zalewski@lakion.com>
  */
-class TotalOfItemsFromTaxonRuleChecker implements RuleCheckerInterface
+final class TotalOfItemsFromTaxonRuleChecker implements RuleCheckerInterface, ChannelBasedRuleCheckerInterface
 {
     const TYPE = 'total_of_items_from_taxon';
 
@@ -43,9 +45,14 @@ class TotalOfItemsFromTaxonRuleChecker implements RuleCheckerInterface
      */
     public function isEligible(PromotionSubjectInterface $subject, array $configuration)
     {
-        if (!$subject instanceof OrderInterface) {
-            throw new UnexpectedTypeException($subject, OrderInterface::class);
+        Assert::isInstanceOf($subject, OrderInterface::class);
+
+        $channelCode = $subject->getChannel()->getCode();
+        if (!isset($configuration[$channelCode])) {
+            return false;
         }
+
+        $configuration = $configuration[$channelCode];
 
         if (!isset($configuration['taxon']) || !isset($configuration['amount'])) {
             return false;
@@ -60,7 +67,7 @@ class TotalOfItemsFromTaxonRuleChecker implements RuleCheckerInterface
 
         /** @var OrderItemInterface $item */
         foreach ($subject->getItems() as $item) {
-            if ($item->getProduct()->hasTaxon($targetTaxon)) {
+            if (!$item->getProduct()->filterProductTaxonsByTaxon($targetTaxon)->isEmpty()) {
                 $itemsWithTaxonTotal += $item->getTotal();
             }
         }
@@ -73,6 +80,6 @@ class TotalOfItemsFromTaxonRuleChecker implements RuleCheckerInterface
      */
     public function getConfigurationFormType()
     {
-        return 'sylius_promotion_rule_total_of_items_from_taxon_configuration';
+        return TotalOfItemsFromTaxonConfigurationType::class;
     }
 }

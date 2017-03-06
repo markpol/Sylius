@@ -6,3 +6,6 @@ sylius:
         attribute:
             code: Kode
             name: Nama
+            type: Jenis
+        attribute_type:
+            select: Pilih

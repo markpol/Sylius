@@ -20,7 +20,7 @@ use Doctrine\ORM\Mapping\ClassMetadataInfo;
  * @author Ivan Molchanov <ivan.molchanov@opensoftdev.ru>
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
-class ORMMappedSuperClassSubscriber extends AbstractDoctrineSubscriber
+final class ORMMappedSuperClassSubscriber extends AbstractDoctrineSubscriber
 {
     /**
      * @return array
@@ -96,7 +96,7 @@ class ORMMappedSuperClassSubscriber extends AbstractDoctrineSubscriber
 
             if ($parentMetadata->isMappedSuperclass) {
                 foreach ($parentMetadata->getAssociationMappings() as $key => $value) {
-                    if ($this->hasRelation($value['type'])) {
+                    if ($this->isRelation($value['type']) && !isset($metadata->associationMappings[$key])) {
                         $metadata->associationMappings[$key] = $value;
                     }
                 }
@@ -114,18 +114,18 @@ class ORMMappedSuperClassSubscriber extends AbstractDoctrineSubscriber
         }
 
         foreach ($metadata->getAssociationMappings() as $key => $value) {
-            if ($this->hasRelation($value['type'])) {
+            if ($this->isRelation($value['type'])) {
                 unset($metadata->associationMappings[$key]);
             }
         }
     }
 
     /**
-     * @param $type
+     * @param string $type
      *
      * @return bool
      */
-    private function hasRelation($type)
+    private function isRelation($type)
     {
         return in_array(
             $type,

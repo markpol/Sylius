@@ -11,7 +11,7 @@
 
 namespace Sylius\Component\Core\Currency;
 
-use Sylius\Component\Channel\Model\ChannelInterface;
+use Sylius\Component\Core\Model\ChannelInterface;
 use Sylius\Component\Currency\Context\CurrencyNotFoundException;
 
 /**
@@ -28,7 +28,7 @@ interface CurrencyStorageInterface
     /**
      * @param ChannelInterface $channel
      *
-     * @return string Currency code
+     * @return string
      *
      * @throws CurrencyNotFoundException
      */

@@ -20,17 +20,22 @@ use Sylius\Component\Grid\Definition\ArrayToDefinitionConverterInterface;
 use Sylius\Component\Grid\Definition\Field;
 use Sylius\Component\Grid\Definition\Filter;
 use Sylius\Component\Grid\Definition\Grid;
+use Sylius\Component\Grid\Event\GridDefinitionConverterEvent;
+use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 
 /**
- * @mixin ArrayToDefinitionConverter
- *
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
 final class ArrayToDefinitionConverterSpec extends ObjectBehavior
 {
+    function let(EventDispatcherInterface $eventDispatcher)
+    {
+        $this->beConstructedWith($eventDispatcher);
+    }
+
     function it_is_initializable()
     {
-        $this->shouldHaveType('Sylius\Component\Grid\Definition\ArrayToDefinitionConverter');
+        $this->shouldHaveType(ArrayToDefinitionConverter::class);
     }
 
     function it_implements_array_to_definition_converter()
@@ -38,16 +43,23 @@ final class ArrayToDefinitionConverterSpec extends ObjectBehavior
         $this->shouldImplement(ArrayToDefinitionConverterInterface::class);
     }
 
-    function it_converts_an_array_to_grid_definition()
+    function it_converts_an_array_to_grid_definition(EventDispatcherInterface $eventDispatcher)
     {
-        $grid = Grid::fromCodeAndDriverConfiguration('sylius_admin_tax_category', 'doctrine/orm', ['resource' => 'sylius.tax_category']);
+        $grid = Grid::fromCodeAndDriverConfiguration(
+            'sylius_admin_tax_category',
+            'doctrine/orm',
+            ['resource' => 'sylius.tax_category']
+        );
 
-        $grid->setSorting(['name' => 'desc']);
+        $grid->setSorting(['code' => 'desc']);
+
+        $grid->setLimits([9, 18]);
 
         $codeField = Field::fromNameAndType('code', 'string');
         $codeField->setLabel('System Code');
         $codeField->setPath('method.code');
         $codeField->setOptions(['template' => 'bar.html.twig']);
+        $codeField->setSortable('code');
 
         $grid->addField($codeField);
 
@@ -61,7 +73,13 @@ final class ArrayToDefinitionConverterSpec extends ObjectBehavior
 
         $filter = Filter::fromNameAndType('enabled', 'boolean');
         $filter->setOptions(['fields' => ['firstName', 'lastName']]);
+        $filter->setCriteria('true');
         $grid->addFilter($filter);
+
+        $eventDispatcher
+            ->dispatch('sylius.grid.admin_tax_category', Argument::type(GridDefinitionConverterEvent::class))
+            ->shouldBeCalled()
+        ;
 
         $definitionArray = [
             'driver' => [
@@ -69,13 +87,15 @@ final class ArrayToDefinitionConverterSpec extends ObjectBehavior
                 'options' => ['resource' => 'sylius.tax_category'],
             ],
             'sorting' => [
-                'name' => 'desc',
+                'code' => 'desc',
             ],
+            'limits' => [9, 18],
             'fields' => [
                 'code' => [
                     'type' => 'string',
                     'label' => 'System Code',
                     'path' => 'method.code',
+                    'sortable' => 'code',
                     'options' => [
                         'template' => 'bar.html.twig'
                     ],
@@ -86,7 +106,8 @@ final class ArrayToDefinitionConverterSpec extends ObjectBehavior
                     'type' => 'boolean',
                     'options' => [
                         'fields' => ['firstName', 'lastName']
-                    ]
+                    ],
+                    'default_value' => 'true',
                 ]
             ],
             'actions' => [

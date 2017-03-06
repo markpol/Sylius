@@ -18,15 +18,18 @@ sylius:
             datetime: Date et heure
             integer: Entier
             percent: Pourcentage
+            select: Sélectionner
             text: Texte
             textarea: Zone de texte
-            title: "Type de l'attribut"
+            title: Type de l'attribut
             validation: Validation
         attribute_type_configuration:
             datetime:
                 format: Format
             date:
                 format: Format
+            select:
+                values: Valeurs
             text:
                 min: Longueur minimum
                 max: Longueur maximum

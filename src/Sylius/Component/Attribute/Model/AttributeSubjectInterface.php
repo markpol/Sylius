@@ -14,9 +14,6 @@ namespace Sylius\Component\Attribute\Model;
 use Doctrine\Common\Collections\Collection;
 
 /**
- * Interface implemented by object which can be characterized
- * using the attributes.
- *
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
 interface AttributeSubjectInterface
@@ -27,9 +24,12 @@ interface AttributeSubjectInterface
     public function getAttributes();
 
     /**
-     * @param Collection $attributes
+     * @param string $localeCode
+     * @param string $fallbackLocaleCode
+     *
+     * @return Collection|AttributeValueInterface[]
      */
-    public function setAttributes(Collection $attributes);
+    public function getAttributesByLocale($localeCode, $fallbackLocaleCode);
 
     /**
      * @param AttributeValueInterface $attribute
@@ -50,15 +50,17 @@ interface AttributeSubjectInterface
 
     /**
      * @param string $attributeCode
+     * @param string|null $localeCode
      *
      * @return bool
      */
-    public function hasAttributeByCode($attributeCode);
+    public function hasAttributeByCodeAndLocale($attributeCode, $localeCode = null);
 
     /**
      * @param string $attributeCode
+     * @param string|null $localeCode
      *
      * @return AttributeValueInterface
      */
-    public function getAttributeByCode($attributeCode);
+    public function getAttributeByCodeAndLocale($attributeCode, $localeCode = null);
 }

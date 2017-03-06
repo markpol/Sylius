@@ -24,32 +24,12 @@ use Sylius\Component\Taxonomy\Model\TaxonInterface;
 interface TaxonRepositoryInterface extends RepositoryInterface
 {
     /**
-     * @param TaxonInterface $taxon
+     * @param string $parentCode
+     * @param string $locale
      *
      * @return TaxonInterface[]
      */
-    public function findChildren(TaxonInterface $taxon);
-
-    /**
-     * @param TaxonInterface $taxon
-     *
-     * @return TaxonInterface[]
-     */
-    public function findChildrenAsTree(TaxonInterface $taxon);
-
-    /**
-     * @param string $code
-     *
-     * @return TaxonInterface[]
-     */
-    public function findChildrenByRootCode($code);
-
-    /**
-     * @param string $code
-     *
-     * @return TaxonInterface[]
-     */
-    public function findChildrenAsTreeByRootCode($code);
+    public function findChildren($parentCode, $locale);
 
     /**
      * @return TaxonInterface[]
@@ -57,31 +37,30 @@ interface TaxonRepositoryInterface extends RepositoryInterface
     public function findRootNodes();
 
     /**
+     * @param string|null $rootCode
+     *
      * @return TaxonInterface[]
      */
-    public function findNodesTreeSorted();
-    
+    public function findNodesTreeSorted($rootCode = null);
+
     /**
-     * @param string $permalink
+     * @param string $slug
+     * @param string $locale
      *
      * @return TaxonInterface|null
      */
-    public function findOneByPermalink($permalink);
+    public function findOneBySlug($slug, $locale);
 
     /**
      * @param string $name
+     * @param string $locale
      *
-     * @return TaxonInterface|null
+     * @return TaxonInterface[]
      */
-    public function findOneByName($name);
+    public function findByName($name, $locale);
 
     /**
      * @return QueryBuilder
      */
     public function createListQueryBuilder();
-
-    /**
-     * @return QueryBuilder
-     */
-    public function getFormQueryBuilder();
 }

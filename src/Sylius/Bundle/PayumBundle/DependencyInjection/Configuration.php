@@ -11,6 +11,7 @@
 
 namespace Sylius\Bundle\PayumBundle\DependencyInjection;
 
+use Sylius\Bundle\PayumBundle\Form\Type\GatewayConfigType;
 use Sylius\Bundle\PayumBundle\Model\GatewayConfig;
 use Sylius\Bundle\PayumBundle\Model\PaymentSecurityToken;
 use Sylius\Bundle\ResourceBundle\Controller\ResourceController;
@@ -20,7 +21,7 @@ use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
-class Configuration implements ConfigurationInterface
+final class Configuration implements ConfigurationInterface
 {
     /**
      * {@inheritdoc}
@@ -83,6 +84,7 @@ class Configuration implements ConfigurationInterface
                                         ->scalarNode('model')->defaultValue(GatewayConfig::class)->cannotBeEmpty()->end()
                                         ->scalarNode('controller')->defaultValue(ResourceController::class)->cannotBeEmpty()->end()
                                         ->scalarNode('factory')->defaultValue(Factory::class)->end()
+                                        ->scalarNode('form')->defaultValue(GatewayConfigType::class)->cannotBeEmpty()->end()
                                     ->end()
                                 ->end()
                             ->end()

@@ -14,7 +14,6 @@ namespace Sylius\Component\Core\Provider;
 use Sylius\Component\Channel\Context\ChannelContextInterface;
 use Sylius\Component\Channel\Context\ChannelNotFoundException;
 use Sylius\Component\Core\Model\ChannelInterface;
-use Sylius\Component\Locale\Context\LocaleNotFoundException;
 use Sylius\Component\Locale\Model\LocaleInterface;
 use Sylius\Component\Locale\Provider\LocaleProviderInterface;
 
@@ -54,35 +53,11 @@ final class ChannelBasedLocaleProvider implements LocaleProviderInterface
 
             return $channel
                 ->getLocales()
-                ->filter(function (LocaleInterface $locale) {
-                    return $locale->isEnabled();
-                })
                 ->map(function (LocaleInterface $locale) {
                     return $locale->getCode();
                 })
                 ->toArray()
             ;
-        } catch (ChannelNotFoundException $exception) {
-            return [$this->defaultLocaleCode];
-        }
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getDefinedLocalesCodes()
-    {
-        try {
-            /** @var ChannelInterface $channel */
-            $channel = $this->channelContext->getChannel();
-
-            return $channel
-                ->getLocales()
-                ->map(function (LocaleInterface $locale) {
-                    return $locale->getCode();
-                })
-                ->toArray()
-                ;
         } catch (ChannelNotFoundException $exception) {
             return [$this->defaultLocaleCode];
         }

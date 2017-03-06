@@ -12,9 +12,13 @@
 namespace Sylius\Behat\Page\Admin\Product;
 
 use Behat\Mink\Driver\Selenium2Driver;
+use Behat\Mink\Element\NodeElement;
 use Sylius\Behat\Behaviour\ChecksCodeImmutability;
 use Sylius\Behat\Page\Admin\Crud\UpdatePage as BaseUpdatePage;
+use Sylius\Component\Core\Model\ChannelInterface;
 use Sylius\Component\Core\Model\TaxonInterface;
+use Sylius\Component\Currency\Model\CurrencyInterface;
+use Sylius\Component\Product\Model\ProductAssociationTypeInterface;
 use Webmozart\Assert\Assert;
 
 /**
@@ -29,46 +33,67 @@ class UpdateSimpleProductPage extends BaseUpdatePage implements UpdateSimpleProd
      */
     public function nameItIn($name, $localeCode)
     {
-        $this->getDocument()->fillField(
-            sprintf('sylius_product_translations_%s_name', $localeCode), $name
-        );
+        $this->activateLanguageTab($localeCode);
+        $this->getElement('name', ['%locale%' => $localeCode])->setValue($name);
+
+        $this->waitForSlugGenerationIfNecessary($localeCode);
     }
 
     /**
      * {@inheritdoc}
      */
-    protected function getCodeElement()
+    public function specifyPrice($channelName, $price)
     {
-        return $this->getElement('code');
+        $this->getElement('price', ['%channel%' => $channelName])->setValue($price);
+    }
+
+    public function addSelectedAttributes()
+    {
+        $this->clickTabIfItsNotActive('attributes');
+        $this->getDocument()->pressButton('Add attributes');
+
+        $form = $this->getDocument()->find('css', 'form');
+
+        $this->getDocument()->waitFor(1, function () use ($form) {
+            return $form->hasClass('loading');
+        });
     }
 
     /**
      * {@inheritdoc}
      */
-    public function specifyPrice($price)
+    public function removeAttribute($attributeName, $localeCode)
     {
-        $this->getDocument()->fillField('Price', $price);
+        $this->clickTabIfItsNotActive('attributes');
+
+        $this->getElement('attribute_delete_button', ['%attributeName%' => $attributeName, '$localeCode%' => $localeCode])->press();
     }
 
     /**
      * {@inheritdoc}
      */
-    public function getAttributeValue($attribute)
+    public function getAttributeValue($attribute, $localeCode)
     {
-        $attributesTab = $this->getElement('tab', ['%name%' => 'attributes']);
-        if (!$attributesTab->hasClass('active')) {
-            $attributesTab->click();
-        }
+        $this->clickTabIfItsNotActive('attributes');
+        $this->clickLocaleTabIfItsNotActive($localeCode);
 
-        return $this->getElement('attribute', ['%attribute%' => $attribute])->getValue();
+        return $this->getElement('attribute', ['%attributeName%' => $attribute, '%localeCode%' => $localeCode])->getValue();
     }
 
     /**
      * {@inheritdoc}
      */
-    public function hasAttribute($attribute)
+    public function getNumberOfAttributes()
     {
-        return null !== $this->getDocument()->find('css', sprintf('.attribute .label:contains("%s")', $attribute));
+        return count($this->getDocument()->findAll('css', '.attribute'));
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function hasAttribute($attributeName)
+    {
+        return null !== $this->getDocument()->find('css', sprintf('.attribute .label:contains("%s")', $attributeName));
     }
 
     /**
@@ -80,14 +105,37 @@ class UpdateSimpleProductPage extends BaseUpdatePage implements UpdateSimpleProd
 
         Assert::isInstanceOf($this->getDriver(), Selenium2Driver::class);
 
-        $this->getDriver()->executeScript(sprintf('$(\'input.search\').val(\'%s\')', $taxon->getName()));
-        $this->getElement('search')->click();
-        $this->getElement('search')->waitFor(10,
-            function () {
-                return $this->hasElement('search_item_selected');
-            });
-        $itemSelected = $this->getElement('search_item_selected');
-        $itemSelected->click();
+        $mainTaxonElement = $this->getElement('main_taxon')->getParent();
+
+        $isVisibleScript = sprintf(
+            '$(document.evaluate("%s", document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue).dropdown("is visible")',
+            $mainTaxonElement->getXpath()
+        );
+        $isAnyAsyncActionInProgressScript = sprintf(
+            'jQuery.active'
+        );
+
+        $this->getDocument()->waitFor(5, function () use ($isAnyAsyncActionInProgressScript) {
+            return !(bool) $this->getDriver()->evaluateScript($isAnyAsyncActionInProgressScript);
+        });
+
+        $mainTaxonElement->click();
+
+        $this->getDocument()->waitFor(5, function () use ($isAnyAsyncActionInProgressScript) {
+            return !(bool) $this->getDriver()->evaluateScript($isAnyAsyncActionInProgressScript);
+        });
+
+        $this->getDocument()->waitFor(5, function () use ($isVisibleScript) {
+            return $this->getDriver()->evaluateScript($isVisibleScript);
+        });
+
+        $mainTaxonItemElement = $mainTaxonElement->find('css', sprintf('div.item:contains("%s")', $taxon->getName()));
+
+        $mainTaxonItemElement->click();
+
+        $this->getDocument()->waitFor(5, function () use ($isVisibleScript) {
+            return !$this->getDriver()->evaluateScript($isVisibleScript);
+        });
     }
 
     /**
@@ -121,23 +169,381 @@ class UpdateSimpleProductPage extends BaseUpdatePage implements UpdateSimpleProd
     /**
      * {@inheritdoc}
      */
+    public function enableSlugModification($locale)
+    {
+        $this->getElement('toggle_slug_modification_button', ['%locale%' => $locale])->press();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function isImageWithTypeDisplayed($type)
+    {
+        $imageElement = $this->getImageElementByType($type);
+
+        if (null === $imageElement) {
+            return false;
+        }
+
+        $imageUrl = $imageElement->find('css', 'img')->getAttribute('src');
+        $this->getDriver()->visit($imageUrl);
+        $pageText = $this->getDocument()->getText();
+        $this->getDriver()->back();
+
+        return false === stripos($pageText, '404 Not Found');
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function attachImage($path, $type = null)
+    {
+        $this->clickTabIfItsNotActive('media');
+
+        $filesPath = $this->getParameter('files_path');
+
+        $this->getDocument()->clickLink('Add');
+
+        $imageForm = $this->getLastImageElement();
+        if (null !== $type) {
+            $imageForm->fillField('Type', $type);
+        }
+
+        $imageForm->find('css', 'input[type="file"]')->attachFile($filesPath.$path);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function changeImageWithType($type, $path)
+    {
+        $filesPath = $this->getParameter('files_path');
+
+        $imageForm = $this->getImageElementByType($type);
+        $imageForm->find('css', 'input[type="file"]')->attachFile($filesPath.$path);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function removeImageWithType($type)
+    {
+        $this->clickTabIfItsNotActive('media');
+
+        $imageElement = $this->getImageElementByType($type);
+        $imageElement->clickLink('Delete');
+    }
+
+    public function removeFirstImage()
+    {
+        $this->clickTabIfItsNotActive('media');
+
+        $imageElement = $this->getFirstImageElement();
+        $imageElement->clickLink('Delete');
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function modifyFirstImageType($type)
+    {
+        $this->clickTabIfItsNotActive('media');
+
+        $firstImage = $this->getFirstImageElement();
+        $this->setImageType($firstImage, $type);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function countImages()
+    {
+        $imageElements = $this->getImageElements();
+
+        return count($imageElements);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function isSlugReadOnlyIn($locale)
+    {
+        return 'readonly' === $this->getElement('slug', ['%locale%' => $locale])->getAttribute('readonly');
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function associateProducts(ProductAssociationTypeInterface $productAssociationType, array $productsNames)
+    {
+        $this->clickTab('associations');
+
+        Assert::isInstanceOf($this->getDriver(), Selenium2Driver::class);
+
+        $dropdown = $this->getElement('association_dropdown', [
+            '%association%' => $productAssociationType->getName()
+        ]);
+        $dropdown->click();
+
+        foreach ($productsNames as $productName) {
+            $dropdown->waitFor(5, function () use ($productName, $productAssociationType) {
+                return $this->hasElement('association_dropdown_item', [
+                    '%association%' => $productAssociationType->getName(),
+                    '%item%' => $productName,
+                ]);
+            });
+
+            $item = $this->getElement('association_dropdown_item', [
+                '%association%' => $productAssociationType->getName(),
+                '%item%' => $productName,
+            ]);
+            $item->click();
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function hasAssociatedProduct($productName, ProductAssociationTypeInterface $productAssociationType)
+    {
+        $this->clickTabIfItsNotActive('associations');
+
+        return $this->hasElement('association_dropdown_item', [
+            '%association%' => $productAssociationType->getName(),
+            '%item%' => $productName,
+        ]);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function removeAssociatedProduct($productName, ProductAssociationTypeInterface $productAssociationType)
+    {
+        $this->clickTabIfItsNotActive('associations');
+
+        $item = $this->getElement('association_dropdown_item_selected', [
+            '%association%' => $productAssociationType->getName(),
+            '%item%' => $productName,
+        ]);
+
+        $deleteIcon = $item->find('css', 'i.delete');
+        Assert::notNull($deleteIcon);
+        $deleteIcon->click();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getPricingConfigurationForChannelAndCurrencyCalculator(ChannelInterface $channel, CurrencyInterface $currency)
+    {
+        $priceConfigurationElement = $this->getElement('pricing_configuration');
+        $priceElement = $priceConfigurationElement
+            ->find('css', sprintf('label:contains("%s %s")', $channel->getCode(), $currency->getCode()))->getParent();
+
+        return $priceElement->find('css', 'input')->getValue();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getSlug($locale)
+    {
+        $this->activateLanguageTab($locale);
+
+        return $this->getElement('slug', ['%locale%' => $locale])->getValue();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function specifySlugIn($slug, $locale)
+    {
+        $this->activateLanguageTab($locale);
+
+        $this->getElement('slug', ['%locale%' => $locale])->setValue($slug);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function activateLanguageTab($locale)
+    {
+        if (!$this->getDriver() instanceof Selenium2Driver) {
+            return;
+        }
+
+        $languageTabTitle = $this->getElement('language_tab', ['%locale%' => $locale]);
+        if (!$languageTabTitle->hasClass('active')) {
+            $languageTabTitle->click();
+        }
+    }
+
+    public function getPriceForChannel($channelName)
+    {
+        return $this->getElement('price', ['%channel%' => $channelName])->getValue();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function getCodeElement()
+    {
+        return $this->getElement('code');
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function getElement($name, array $parameters = [])
+    {
+        if (!isset($parameters['%locale%'])) {
+            $parameters['%locale%'] = 'en_US';
+        }
+
+        return parent::getElement($name, $parameters);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     protected function getDefinedElements()
     {
         return array_merge(parent::getDefinedElements(), [
-            'attribute' => '.attribute .label:contains("%attribute%") ~ input',
+            'association_dropdown' => '.field > label:contains("%association%") ~ .product-select',
+            'association_dropdown_item' => '.field > label:contains("%association%") ~ .product-select > div.menu > div.item:contains("%item%")',
+            'association_dropdown_item_selected' => '.field > label:contains("%association%") ~ .product-select > a.label:contains("%item%")',
+            'attribute' => '.tab[data-tab="%localeCode%"] .attribute .label:contains("%attributeName%") ~ input',
+            'attribute_delete_button' => '.tab[data-tab="%localeCode%"] .attribute .label:contains("%attributeName%") ~ button',
             'code' => '#sylius_product_code',
-            'price' => '#sylius_product_variant_price',
-            'name' => '#sylius_product_translations_en_US_name',
+            'images' => '#sylius_product_images',
+            'language_tab' => '[data-locale="%locale%"] .title',
+            'locale_tab' => '#attributesContainer .menu [data-tab="%localeCode%"]',
+            'name' => '#sylius_product_translations_%locale%_name',
+            'price' => '#sylius_product_variant_channelPricings [data-form-collection="item"]:contains("%channel%") input',
+            'pricing_configuration' => '#sylius_calculator_container',
+            'main_taxon' => '#sylius_product_mainTaxon',
+            'slug' => '#sylius_product_translations_%locale%_slug',
             'tab' => '.menu [data-tab="%name%"]',
-            'search' => '.ui.fluid.search.selection.dropdown',
-            'search_item_selected' => 'div.menu > div.item.selected',
             'taxonomy' => 'a[data-tab="taxonomy"]',
             'tracked' => '#sylius_product_variant_tracked',
+            'toggle_slug_modification_button' => '[data-locale="%locale%"] .toggle-product-slug-modification',
         ]);
     }
 
     private function openTaxonBookmarks()
     {
         $this->getElement('taxonomy')->click();
+    }
+
+    /**
+     * @param string $tabName
+     */
+    private function clickTabIfItsNotActive($tabName)
+    {
+        $attributesTab = $this->getElement('tab', ['%name%' => $tabName]);
+        if (!$attributesTab->hasClass('active')) {
+            $attributesTab->click();
+        }
+    }
+
+    /**
+     * @param string $tabName
+     */
+    private function clickTab($tabName)
+    {
+        $attributesTab = $this->getElement('tab', ['%name%' => $tabName]);
+        $attributesTab->click();
+    }
+
+    /**
+     * @param string $localeCode
+     */
+    private function clickLocaleTabIfItsNotActive($localeCode)
+    {
+        $localeTab = $this->getElement('locale_tab', ['%localeCode%' => $localeCode]);
+        if (!$localeTab->hasClass('active')) {
+            $localeTab->click();
+        }
+    }
+
+    /**
+     * @param string $type
+     *
+     * @return NodeElement
+     */
+    private function getImageElementByType($type)
+    {
+        $images = $this->getElement('images');
+        $typeInput = $images->find('css', 'input[value="'.$type.'"]');
+
+        if (null === $typeInput) {
+            return null;
+        }
+
+        return $typeInput->getParent()->getParent()->getParent();
+    }
+
+    /**
+     * @return NodeElement[]
+     */
+    private function getImageElements()
+    {
+        $images = $this->getElement('images');
+
+        return $images->findAll('css', 'div[data-form-collection="item"]');
+    }
+
+    /**
+     * @return NodeElement
+     */
+    private function getLastImageElement()
+    {
+        $imageElements = $this->getImageElements();
+
+        Assert::notEmpty($imageElements);
+
+        return end($imageElements);
+    }
+
+    /**
+     * @return NodeElement
+     */
+    private function getFirstImageElement()
+    {
+        $imageElements = $this->getImageElements();
+
+        Assert::notEmpty($imageElements);
+
+        return reset($imageElements);
+    }
+
+    /**
+     * @param string $locale
+     */
+    private function waitForSlugGenerationIfNecessary($locale)
+    {
+        if (!$this->getDriver() instanceof Selenium2Driver) {
+            return;
+        }
+
+        $slugElement = $this->getElement('slug', ['%locale%' => $locale]);
+        if ($slugElement->hasAttribute('readonly')) {
+            return;
+        }
+
+        $value = $slugElement->getValue();
+        $this->getDocument()->waitFor(10, function () use ($slugElement, $value) {
+            return $value !== $slugElement->getValue();
+        });
+    }
+
+    /**
+     * @param NodeElement $imageElement
+     * @param string $type
+     */
+    private function setImageType(NodeElement $imageElement, $type)
+    {
+        $typeField = $imageElement->findField('Type');
+        $typeField->setValue($type);
     }
 }

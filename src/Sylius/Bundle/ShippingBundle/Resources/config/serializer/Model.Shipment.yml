@@ -6,17 +6,17 @@ Sylius\Component\Shipping\Model\Shipment:
             expose: true
             type: integer
             xml_attribute: true
+            groups: [Default, Detailed]
         state:
             expose: true
             type: string
+            groups: [Default, Detailed]
         method:
             expose: true
-        createdAt:
+            groups: [Default, Detailed]
+        tracking:
             expose: true
-            type: DateTime
-        updatedAt:
-            expose: true
-            type: DateTime
+            groups: [Default, Detailed]
     relations:
         - rel: self
           exclusion:
@@ -25,10 +25,12 @@ Sylius\Component\Shipping\Model\Shipment:
                 route: sylius_api_shipment_show
                 parameters:
                     id: expr(object.getId())
-        - rel: method
+                    version: 1
+        - rel: shipping-method
           exclusion:
                 exclude_if: expr(!object.getMethod())
           href:
                 route: sylius_api_shipping_method_show
                 parameters:
-                    id: expr(object.getMethod().getId())
+                    code: expr(object.getMethod().getCode())
+                    version: 1

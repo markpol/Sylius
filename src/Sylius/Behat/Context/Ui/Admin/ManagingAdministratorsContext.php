@@ -13,9 +13,9 @@ namespace Sylius\Behat\Context\Ui\Admin;
 
 use Behat\Behat\Context\Context;
 use Sylius\Behat\NotificationType;
+use Sylius\Behat\Page\Admin\Administrator\CreatePageInterface;
 use Sylius\Behat\Page\Admin\Administrator\UpdatePageInterface;
 use Sylius\Behat\Page\Admin\Crud\IndexPageInterface;
-use Sylius\Behat\Page\Admin\Administrator\CreatePageInterface;
 use Sylius\Behat\Service\NotificationCheckerInterface;
 use Sylius\Component\Core\Model\AdminUserInterface;
 use Webmozart\Assert\Assert;
@@ -73,6 +73,7 @@ final class ManagingAdministratorsContext implements Context
 
     /**
      * @Given /^I want to edit (this administrator)$/
+     * @Given /^I am editing (my) details$/
      */
     public function iWantToEditThisAdministrator(AdminUserInterface $adminUser)
     {
@@ -119,6 +120,23 @@ final class ManagingAdministratorsContext implements Context
     public function iChangeItsEmailAs($email)
     {
         $this->updatePage->changeEmail($email);
+    }
+
+    /**
+     * @When I specify its locale to :localeCode
+     */
+    public function iSpecifyItsLocaleTo($localeCode)
+    {
+        $this->createPage->specifyLocale($localeCode);
+    }
+
+    /**
+     * @When I set my locale to :localeCode
+     */
+    public function iSetMyLocaleTo($localeCode)
+    {
+        $this->updatePage->changeLocale($localeCode);
+        $this->updatePage->saveChanges();
     }
 
     /**
@@ -175,16 +193,12 @@ final class ManagingAdministratorsContext implements Context
      * @Then the administrator :email should appear in the store
      * @Then I should see the administrator :email in the list
      * @Then there should still be only one administrator with an email :email
-     * @Then there should still be administrator with email :email
      */
     public function theAdministratorShouldAppearInTheStore($email)
     {
         $this->indexPage->open();
 
-        Assert::true(
-            $this->indexPage->isSingleResourceOnPage(['email' => $email]),
-            sprintf('Administrator %s does not exist', $email)
-        );
+        Assert::true($this->indexPage->isSingleResourceOnPage(['email' => $email]));
     }
 
     /**
@@ -195,10 +209,7 @@ final class ManagingAdministratorsContext implements Context
     {
         $this->indexPage->open();
 
-        Assert::true(
-            $this->indexPage->isSingleResourceOnPage(['username' => $username]),
-            sprintf('Administrator with %s username does not exist', $username)
-        );
+        Assert::true($this->indexPage->isSingleResourceOnPage(['username' => $username]));
     }
 
     /**
@@ -206,11 +217,7 @@ final class ManagingAdministratorsContext implements Context
      */
     public function iShouldSeeAdministratorsInTheList($number)
     {
-        Assert::same(
-            $this->indexPage->countItems(),
-            $number,
-            sprintf('There should be %s administrators, but got %s', $number, $this->indexPage->countItems())
-        );
+        Assert::same($this->indexPage->countItems(), (int) $number);
     }
 
     /**
@@ -252,11 +259,7 @@ final class ManagingAdministratorsContext implements Context
     {
         $this->indexPage->open();
 
-        Assert::same(
-            1,
-            $this->indexPage->countItems(),
-            'There should not be any new administrators'
-        );
+        Assert::same($this->indexPage->countItems(), 1);
     }
 
     /**
@@ -264,10 +267,7 @@ final class ManagingAdministratorsContext implements Context
      */
     public function thereShouldBeNoAnymore($email)
     {
-        Assert::false(
-            $this->indexPage->isSingleResourceOnPage(['email' => $email]),
-            sprintf('Administrator with %s email should be deleted', $email)
-        );
+        Assert::false($this->indexPage->isSingleResourceOnPage(['email' => $email]));
     }
 
     /**

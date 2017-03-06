@@ -17,7 +17,7 @@ use Sylius\Bundle\LocaleBundle\Templating\Helper\LocaleHelperInterface;
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  * @author Łukasz Chruściel <lukasz.chrusciel@lakion.com>
  */
-class LocaleExtension extends \Twig_Extension
+final class LocaleExtension extends \Twig_Extension
 {
     /**
      * @var LocaleHelperInterface
@@ -40,13 +40,5 @@ class LocaleExtension extends \Twig_Extension
         return [
             new \Twig_SimpleFilter('sylius_locale_name', [$this->localeHelper, 'convertCodeToName']),
         ];
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getName()
-    {
-        return 'sylius_locale';
     }
 }

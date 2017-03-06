@@ -12,7 +12,6 @@
 namespace spec\Sylius\Component\Grid\Definition;
 
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 use Sylius\Component\Grid\Definition\Action;
 use Sylius\Component\Grid\Definition\ActionGroup;
 use Sylius\Component\Grid\Definition\Field;
@@ -20,8 +19,6 @@ use Sylius\Component\Grid\Definition\Filter;
 use Sylius\Component\Grid\Definition\Grid;
 
 /**
- * @mixin Grid
- *
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
 final class GridSpec extends ObjectBehavior
@@ -37,7 +34,7 @@ final class GridSpec extends ObjectBehavior
 
     function it_is_initializable()
     {
-        $this->shouldHaveType('Sylius\Component\Grid\Definition\Grid');
+        $this->shouldHaveType(Grid::class);
     }
 
     function it_has_code()
@@ -72,8 +69,19 @@ final class GridSpec extends ObjectBehavior
 
     function it_can_have_sorting_configuration()
     {
-        $this->setSorting(['name' => 'desc']);
-        $this->getSorting()->shouldReturn(['name' => 'desc']);
+        $this->setSorting(['name' => 'asc']);
+        $this->getSorting()->shouldReturn(['name' => 'asc']);
+    }
+
+    function it_has_no_pagination_limits_by_default()
+    {
+        $this->getLimits()->shouldReturn([]);
+    }
+
+    function its_pagination_limits_can_be_configured()
+    {
+        $this->setLimits([20, 50, 100]);
+        $this->getLimits()->shouldReturn([20, 50, 100]);
     }
 
     function it_does_not_have_any_fields_by_default()
@@ -111,6 +119,25 @@ final class GridSpec extends ObjectBehavior
         $this->hasField('parent')->shouldReturn(false);
     }
 
+    function it_can_remove_field(Field $field)
+    {
+        $field->getName()->willReturn('enabled');
+        $this->addField($field);
+
+        $this->removeField('enabled');
+        $this->hasField('enabled')->shouldReturn(false);
+    }
+
+    function it_can_replace_field(Field $firstField, Field $secondField)
+    {
+        $firstField->getName()->willReturn('enabled');
+        $secondField->getName()->willReturn('enabled');
+        $this->addField($firstField);
+
+        $this->setField($secondField);
+        $this->getField('enabled')->shouldReturn($secondField);
+    }
+
     function it_does_not_have_any_action_groups_by_default()
     {
         $this->getActionGroups()->shouldReturn([]);
@@ -144,6 +171,25 @@ final class GridSpec extends ObjectBehavior
 
         $this->hasActionGroup('row')->shouldReturn(true);
         $this->hasActionGroup('default')->shouldReturn(false);
+    }
+
+    function it_can_remove_action_group(ActionGroup $actionGroup)
+    {
+        $actionGroup->getName()->willReturn('row');
+        $this->addActionGroup($actionGroup);
+
+        $this->removeActionGroup('row');
+        $this->hasActionGroup('row')->shouldReturn(false);
+    }
+
+    function it_can_replace_action_group(ActionGroup $firstActionGroup, ActionGroup $secondActionGroup)
+    {
+        $firstActionGroup->getName()->willReturn('row');
+        $secondActionGroup->getName()->willReturn('row');
+        $this->addActionGroup($firstActionGroup);
+
+        $this->setActionGroup($secondActionGroup);
+        $this->getActionGroup('row')->shouldReturn($secondActionGroup);
     }
 
     function it_returns_actions_for_given_group(ActionGroup $actionGroup, Action $action)
@@ -188,5 +234,24 @@ final class GridSpec extends ObjectBehavior
 
         $this->hasFilter('enabled')->shouldReturn(true);
         $this->hasFilter('created_at')->shouldReturn(false);
+    }
+
+    function it_can_remove_filter(Filter $filter)
+    {
+        $filter->getName()->willReturn('enabled');
+        $this->addFilter($filter);
+
+        $this->removeFilter('enabled');
+        $this->hasFilter('enabled')->shouldReturn(false);
+    }
+
+    function it_can_replace_filter(Filter $firstFilter, Filter $secondFilter)
+    {
+        $firstFilter->getName()->willReturn('enabled');
+        $secondFilter->getName()->willReturn('enabled');
+        $this->addFilter($firstFilter);
+
+        $this->setFilter($secondFilter);
+        $this->getFilter('enabled')->shouldReturn($secondFilter);
     }
 }

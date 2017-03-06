@@ -11,6 +11,7 @@
 
 namespace spec\Sylius\Bundle\ResourceBundle\Controller;
 
+use FOS\RestBundle\Context\Context;
 use FOS\RestBundle\View\View;
 use FOS\RestBundle\View\ViewHandler as RestViewHandler;
 use JMS\Serializer\SerializationContext;
@@ -21,8 +22,6 @@ use Sylius\Bundle\ResourceBundle\Controller\ViewHandlerInterface;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * @mixin ViewHandler
- *
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
 final class ViewHandlerSpec extends ObjectBehavior
@@ -34,7 +33,7 @@ final class ViewHandlerSpec extends ObjectBehavior
 
     function it_is_initializable()
     {
-        $this->shouldHaveType('Sylius\Bundle\ResourceBundle\Controller\ViewHandler');
+        $this->shouldHaveType(ViewHandler::class);
     }
 
     function it_implements_view_handler_interface()
@@ -62,7 +61,7 @@ final class ViewHandlerSpec extends ObjectBehavior
     ) {
         $requestConfiguration->isHtmlRequest()->willReturn(false);
         $view = View::create();
-        $view->setSerializationContext(new SerializationContext());
+        $view->setContext(new Context());
 
         $requestConfiguration->getSerializationGroups()->willReturn(['Detailed']);
         $requestConfiguration->getSerializationVersion()->willReturn('2.0.0');

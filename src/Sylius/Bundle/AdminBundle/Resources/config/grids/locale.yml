@@ -6,31 +6,23 @@ sylius_grid:
                 options:
                     class: "%sylius.model.locale.class%"
             sorting:
-                code:
-                    path: code
-                    direction: asc
+                code: asc
             fields:
                 code:
                     type: string
                     label: sylius.ui.code
+                    sortable: ~
                 name:
                     type: twig
                     label: sylius.ui.name
                     path: .
+                    sortable: code
                     options:
-                        template: SyliusAdminBundle:Locale/Field:name.html.twig
-                enabled:
-                    type: twig
-                    label: sylius.ui.enabled
-                    options:
-                        template: SyliusAdminBundle:Grid/Field:enabled.html.twig
+                        template: "@SyliusAdmin/Locale/Grid/Field/name.html.twig"
             filters:
                 code:
                     type: string
                     label: sylius.ui.code
-                enabled:
-                    type: boolean
-                    label: sylius.ui.enabled
             actions:
                 main:
                     create:

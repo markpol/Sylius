@@ -19,7 +19,7 @@ use Symfony\Component\HttpKernel\DependencyInjection\Extension;
 /**
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
-class SyliusAdminExtension extends Extension
+final class SyliusAdminExtension extends Extension
 {
     /**
      * {@inheritdoc}
@@ -28,7 +28,6 @@ class SyliusAdminExtension extends Extension
     {
         $loader = new XmlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
 
-        $loader->load('controller.xml');
-        $loader->load('menu.xml');
+        $loader->load('services.xml');
     }
 }

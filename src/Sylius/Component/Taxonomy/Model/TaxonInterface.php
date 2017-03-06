@@ -19,10 +19,7 @@ use Sylius\Component\Resource\Model\TranslatableInterface;
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  * @author Gonzalo Vilaseca <gvilaseca@reiss.co.uk>
  */
-interface TaxonInterface extends
-    CodeAwareInterface,
-    TaxonTranslationInterface,
-    TranslatableInterface
+interface TaxonInterface extends CodeAwareInterface, TaxonTranslationInterface, TranslatableInterface
 {
     /**
      * @return bool
@@ -72,26 +69,6 @@ interface TaxonInterface extends
     public function removeChild(TaxonInterface $taxon);
 
     /**
-     * @return string
-     */
-    public function getName();
-
-    /**
-     * @param string $name
-     */
-    public function setName($name);
-
-    /**
-     * @return string
-     */
-    public function getPermalink();
-
-    /**
-     * @param string $permalink
-     */
-    public function setPermalink($permalink);
-
-    /**
      * @return int
      */
     public function getLeft();
@@ -120,4 +97,14 @@ interface TaxonInterface extends
      * @param int $level
      */
     public function setLevel($level);
+
+    /**
+     * @return int
+     */
+    public function getPosition();
+
+    /**
+     * @param int $position
+     */
+    public function setPosition($position);
 }

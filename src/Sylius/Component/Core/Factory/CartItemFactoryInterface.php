@@ -11,7 +11,8 @@
 
 namespace Sylius\Component\Core\Factory;
 
-use Sylius\Component\Cart\Model\CartItemInterface;
+use Sylius\Component\Core\Model\OrderInterface;
+use Sylius\Component\Order\Model\OrderItemInterface;
 use Sylius\Component\Core\Model\ProductInterface;
 use Sylius\Component\Resource\Factory\FactoryInterface;
 
@@ -23,7 +24,14 @@ interface CartItemFactoryInterface extends FactoryInterface
     /**
      * @param ProductInterface $product
      *
-     * @return CartItemInterface
+     * @return OrderItemInterface
      */
     public function createForProduct(ProductInterface $product);
+
+    /**
+     * @param OrderInterface $order
+     *
+     * @return OrderItemInterface
+     */
+    public function createForCart(OrderInterface $order);
 }

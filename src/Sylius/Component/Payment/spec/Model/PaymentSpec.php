@@ -12,7 +12,7 @@
 namespace spec\Sylius\Component\Payment\Model;
 
 use PhpSpec\ObjectBehavior;
-use Sylius\Component\Payment\Model\CreditCardInterface;
+use Sylius\Component\Payment\Model\Payment;
 use Sylius\Component\Payment\Model\PaymentInterface;
 use Sylius\Component\Payment\Model\PaymentMethodInterface;
 
@@ -23,7 +23,7 @@ final class PaymentSpec extends ObjectBehavior
 {
     function it_is_initializable()
     {
-        $this->shouldHaveType('Sylius\Component\Payment\Model\Payment');
+        $this->shouldHaveType(Payment::class);
     }
 
     function it_implements_sylius_payment_interface()
@@ -45,24 +45,6 @@ final class PaymentSpec extends ObjectBehavior
     {
         $this->setMethod($method);
         $this->getMethod()->shouldReturn($method);
-    }
-
-    function it_has_no_source_by_default()
-    {
-        $this->getSource()->shouldReturn(null);
-    }
-
-    function it_allows_to_assign_a_source(CreditCardInterface $source)
-    {
-        $this->setSource($source);
-        $this->getSource()->shouldReturn($source);
-    }
-
-    function it_allows_to_remove_a_source(CreditCardInterface $source)
-    {
-        $this->setSource($source);
-        $this->setSource(null);
-        $this->getSource()->shouldReturn(null);
     }
 
     function it_has_no_currency_code_by_default()
@@ -98,9 +80,9 @@ final class PaymentSpec extends ObjectBehavior
         $this->shouldThrow('\InvalidArgumentException')->duringSetAmount(new \stdClass());
     }
 
-    function it_has_new_state_by_default()
+    function it_has_cart_state_by_default()
     {
-        $this->getState()->shouldReturn(PaymentInterface::STATE_NEW);
+        $this->getState()->shouldReturn(PaymentInterface::STATE_CART);
     }
 
     function its_state_is_mutable()

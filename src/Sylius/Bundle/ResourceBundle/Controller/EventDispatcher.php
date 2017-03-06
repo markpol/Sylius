@@ -18,7 +18,7 @@ use Symfony\Component\EventDispatcher\EventDispatcherInterface as SymfonyEventDi
 /**
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
-class EventDispatcher implements EventDispatcherInterface
+final class EventDispatcher implements EventDispatcherInterface
 {
     /**
      * @var SymfonyEventDispatcherInterface
@@ -71,6 +71,26 @@ class EventDispatcher implements EventDispatcherInterface
         $event = $this->getEvent($resource);
 
         $this->eventDispatcher->dispatch(sprintf('%s.%s.post_%s', $metadata->getApplicationName(), $metadata->getName(), $eventName), $event);
+
+        return $event;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function dispatchInitializeEvent(
+        $eventName,
+        RequestConfiguration $requestConfiguration,
+        ResourceInterface $resource
+    ) {
+        $eventName = $requestConfiguration->getEvent() ?: $eventName;
+        $metadata = $requestConfiguration->getMetadata();
+        $event = $this->getEvent($resource);
+
+        $this->eventDispatcher->dispatch(
+            sprintf('%s.%s.initialize_%s', $metadata->getApplicationName(), $metadata->getName(), $eventName),
+            $event
+        );
 
         return $event;
     }

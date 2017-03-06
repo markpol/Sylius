@@ -13,7 +13,6 @@ namespace spec\Sylius\Bundle\ResourceBundle\Controller;
 
 use Pagerfanta\Pagerfanta;
 use PhpSpec\ObjectBehavior;
-use Prophecy\Argument;
 use Sylius\Bundle\ResourceBundle\Controller\RequestConfiguration;
 use Sylius\Bundle\ResourceBundle\Controller\ResourcesResolver;
 use Sylius\Bundle\ResourceBundle\Controller\ResourcesResolverInterface;
@@ -21,15 +20,13 @@ use Sylius\Component\Resource\Model\ResourceInterface;
 use Sylius\Component\Resource\Repository\RepositoryInterface;
 
 /**
- * @mixin ResourcesResolver
- *
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
 final class ResourcesResolverSpec extends ObjectBehavior
 {
     function it_is_initializable()
     {
-        $this->shouldHaveType('Sylius\Bundle\ResourceBundle\Controller\ResourcesResolver');
+        $this->shouldHaveType(ResourcesResolver::class);
     }
 
     function it_implements_resources_resolver_interface()
@@ -37,7 +34,7 @@ final class ResourcesResolverSpec extends ObjectBehavior
         $this->shouldImplement(ResourcesResolverInterface::class);
     }
 
-    function it_gets_all_resources_if_not_paginated_and_there_is_no_limit(
+    function it_gets_all_resources_if_has_no_criteria(
         RequestConfiguration $requestConfiguration,
         RepositoryInterface $repository,
         ResourceInterface $firstResource,
@@ -47,9 +44,11 @@ final class ResourcesResolverSpec extends ObjectBehavior
         $requestConfiguration->getRepositoryMethod(null)->willReturn(null);
 
         $requestConfiguration->isPaginated()->willReturn(false);
-        $requestConfiguration->isLimited()->willReturn(false);
+        $requestConfiguration->isFilterable()->willReturn(false);
+        $requestConfiguration->isSortable()->willReturn(false);
+        $requestConfiguration->getLimit()->willReturn(null);
 
-        $repository->findAll()->willReturn([$firstResource, $secondResource]);
+        $repository->findBy([], [], null)->willReturn([$firstResource, $secondResource]);
 
         $this->getResources($requestConfiguration, $repository)->shouldReturn([$firstResource, $secondResource]);
     }
@@ -65,6 +64,8 @@ final class ResourcesResolverSpec extends ObjectBehavior
         $requestConfiguration->getRepositoryMethod(null)->willReturn(null);
 
         $requestConfiguration->isPaginated()->willReturn(false);
+        $requestConfiguration->isFilterable()->willReturn(true);
+        $requestConfiguration->isSortable()->willReturn(true);
         $requestConfiguration->isLimited()->willReturn(true);
         $requestConfiguration->getLimit()->willReturn(15);
 
@@ -105,8 +106,8 @@ final class ResourcesResolverSpec extends ObjectBehavior
         $requestConfiguration->isPaginated()->willReturn(true);
         $requestConfiguration->getPaginationMaxPerPage()->willReturn(5);
         $requestConfiguration->isLimited()->willReturn(false);
-        $requestConfiguration->getCriteria()->willReturn([]);
-        $requestConfiguration->getSorting()->willReturn([]);
+        $requestConfiguration->isFilterable()->willReturn(false);
+        $requestConfiguration->isSortable()->willReturn(false);
 
         $repository->createPaginator([], [])->willReturn($paginator);
 

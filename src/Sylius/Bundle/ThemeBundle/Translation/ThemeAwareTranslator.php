@@ -57,7 +57,10 @@ final class ThemeAwareTranslator implements TranslatorInterface, TranslatorBagIn
      */
     public function __call($method, array $arguments)
     {
-        return call_user_func_array([$this->translator, $method], $arguments);
+        $translator = $this->translator;
+        $arguments = array_values($arguments);
+
+        return $translator->$method(...$arguments);
     }
 
     /**
@@ -89,7 +92,7 @@ final class ThemeAwareTranslator implements TranslatorInterface, TranslatorBagIn
      */
     public function setLocale($locale)
     {
-        $this->translator->setLocale($locale);
+        $this->translator->setLocale($this->transformLocale($locale));
     }
 
     /**

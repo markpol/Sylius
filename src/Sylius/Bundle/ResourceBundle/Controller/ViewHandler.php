@@ -17,7 +17,7 @@ use FOS\RestBundle\View\ViewHandler as RestViewHandler;
 /**
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
-class ViewHandler implements ViewHandlerInterface
+final class ViewHandler implements ViewHandlerInterface
 {
     /**
      * @var RestViewHandler
@@ -44,7 +44,7 @@ class ViewHandler implements ViewHandlerInterface
                 $this->restViewHandler->setExclusionStrategyVersion($version);
             }
 
-            $view->getSerializationContext()->enableMaxDepthChecks();
+            $view->getContext()->enableMaxDepth();
         }
 
         return $this->restViewHandler->handle($view);

@@ -14,6 +14,7 @@ namespace spec\Sylius\Component\Attribute\Model;
 use PhpSpec\ObjectBehavior;
 use Sylius\Component\Attribute\Model\AttributeInterface;
 use Sylius\Component\Attribute\Model\AttributeSubjectInterface;
+use Sylius\Component\Attribute\Model\AttributeValue;
 use Sylius\Component\Attribute\Model\AttributeValueInterface;
 
 /**
@@ -24,7 +25,7 @@ final class AttributeValueSpec extends ObjectBehavior
 {
     function it_is_initializable()
     {
-        $this->shouldHaveType('Sylius\Component\Attribute\Model\AttributeValue');
+        $this->shouldHaveType(AttributeValue::class);
     }
 
     function it_implements_Sylius_subject_attribute_interface()
@@ -66,6 +67,17 @@ final class AttributeValueSpec extends ObjectBehavior
     {
         $this->setAttribute($attribute);
         $this->getAttribute()->shouldReturn($attribute);
+    }
+
+    function it_has_no_default_locale_code()
+    {
+        $this->getLocaleCode()->shouldReturn(null);
+    }
+
+    function its_locale_code_is_mutable()
+    {
+        $this->setLocaleCode('en');
+        $this->getLocaleCode()->shouldReturn('en');
     }
 
     function it_has_no_value_by_default()

@@ -11,7 +11,7 @@
 
 namespace Sylius\Component\Core\Repository;
 
-use Pagerfanta\PagerfantaInterface;
+use Doctrine\ORM\QueryBuilder;
 use Sylius\Component\Core\Model\ChannelInterface;
 use Sylius\Component\Core\Model\ProductInterface;
 use Sylius\Component\Core\Model\TaxonInterface;
@@ -22,68 +22,46 @@ use Sylius\Component\Product\Repository\ProductRepositoryInterface as BaseProduc
  */
 interface ProductRepositoryInterface extends BaseProductRepositoryInterface
 {
-    public function createListQueryBuilder();
-
     /**
-     * @param TaxonInterface $taxon
-     * @param array $criteria
+     * @param string $locale
+     * @param mixed|null $taxonId
      *
-     * @return PagerfantaInterface
+     * @return QueryBuilder
      */
-    public function createByTaxonPaginator(TaxonInterface $taxon, array $criteria = []);
+    public function createListQueryBuilder($locale, $taxonId = null);
 
     /**
-     * @param TaxonInterface $taxon
      * @param ChannelInterface $channel
-     *
-     * @return PagerfantaInterface
-     */
-    public function createByTaxonAndChannelPaginator(TaxonInterface $taxon, ChannelInterface $channel);
-
-    /**
-     * @param array $criteria
+     * @param TaxonInterface $taxon
+     * @param string $locale
      * @param array $sorting
      *
-     * @return PagerfantaInterface
+     * @return QueryBuilder
      */
-    public function createFilterPaginator(array $criteria = null, array $sorting = null);
-
-    /**
-     * @param int $id
-     *
-     * @return null|ProductInterface
-     */
-    public function findForDetailsPage($id);
+    public function createShopListQueryBuilder(ChannelInterface $channel, TaxonInterface $taxon, $locale, array $sorting = []);
 
     /**
      * @param ChannelInterface $channel
+     * @param string $locale
      * @param int $count
      *
      * @return ProductInterface[]
      */
-    public function findLatestByChannel(ChannelInterface $channel, $count);
+    public function findLatestByChannel(ChannelInterface $channel, $locale, $count);
 
     /**
-     * @param mixed $id
      * @param ChannelInterface $channel
+     * @param string $locale
+     * @param string $slug
      *
      * @return ProductInterface|null
      */
-    public function findOneByIdAndChannel($id, ChannelInterface $channel = null);
+    public function findOneByChannelAndSlug(ChannelInterface $channel, $locale, $slug);
 
     /**
      * @param string $code
-     * @param ChannelInterface $channel
-     * 
-     * @return ProductInterface[]|null
-     */
-    public function findEnabledByTaxonCodeAndChannel($code, ChannelInterface $channel);
-
-    /**
-     * @param string $slug
-     * @param ChannelInterface $channel
      *
      * @return ProductInterface|null
      */
-    public function findOneBySlugAndChannel($slug, ChannelInterface $channel);
+    public function findOneByCode($code);
 }

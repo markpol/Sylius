@@ -12,6 +12,7 @@
 namespace Sylius\Bundle\ResourceBundle\Event;
 
 use Symfony\Component\EventDispatcher\GenericEvent;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * @author Jérémy Leherpeur <jeremy@leherpeur.net>
@@ -26,29 +27,33 @@ class ResourceControllerEvent extends GenericEvent
     /**
      * @var string
      */
-    protected $messageType = '';
+    private $messageType = '';
 
     /**
      * @var string
      */
-    protected $message = '';
+    private $message = '';
 
     /**
      * @var array
      */
-    protected $messageParameters = [];
+    private $messageParameters = [];
 
     /**
      * @var int
      */
-    protected $errorCode = 500;
+    private $errorCode = 500;
 
     /**
-     * Stop event propagation
-     *
+     * @var Response
+     */
+    private $response;
+
+    /**
      * @param string $message
      * @param string $type
-     * @param array  $parameters
+     * @param array $parameters
+     * @param int $errorCode
      */
     public function stop($message, $type = self::TYPE_ERROR, $parameters = [], $errorCode = 500)
     {
@@ -61,8 +66,6 @@ class ResourceControllerEvent extends GenericEvent
     }
 
     /**
-     * Alias
-     *
      * @return bool
      */
     public function isStopped()
@@ -71,8 +74,6 @@ class ResourceControllerEvent extends GenericEvent
     }
 
     /**
-     * Get messageType property
-     *
      * @return string
      */
     public function getMessageType()
@@ -81,11 +82,7 @@ class ResourceControllerEvent extends GenericEvent
     }
 
     /**
-     * Sets messageType property
-     *
      * @param string $messageType Should be one of ResourceEvent's TYPE constants
-     *
-     * @return $this
      */
     public function setMessageType($messageType)
     {
@@ -93,8 +90,6 @@ class ResourceControllerEvent extends GenericEvent
     }
 
     /**
-     * Get message property
-     *
      * @return string
      */
     public function getMessage()
@@ -103,11 +98,7 @@ class ResourceControllerEvent extends GenericEvent
     }
 
     /**
-     * Sets message property
-     *
      * @param string $message
-     *
-     * @return $this
      */
     public function setMessage($message)
     {
@@ -115,8 +106,6 @@ class ResourceControllerEvent extends GenericEvent
     }
 
     /**
-     * Get messageParameters property
-     *
      * @return array
      */
     public function getMessageParameters()
@@ -125,11 +114,7 @@ class ResourceControllerEvent extends GenericEvent
     }
 
     /**
-     * Sets messageParameters property
-     *
      * @param array $messageParameters
-     *
-     * @return $this
      */
     public function setMessageParameters(array $messageParameters)
     {
@@ -137,8 +122,6 @@ class ResourceControllerEvent extends GenericEvent
     }
 
     /**
-     * Get errorCode property
-     *
      * @return int
      */
     public function getErrorCode()
@@ -147,14 +130,34 @@ class ResourceControllerEvent extends GenericEvent
     }
 
     /**
-     * Sets errorCode property
-     *
      * @param int $errorCode
-     *
-     * @return $this
      */
     public function setErrorCode($errorCode)
     {
         $this->errorCode = $errorCode;
+    }
+
+    /**
+     * @param Response $response
+     */
+    public function setResponse(Response $response)
+    {
+        $this->response = $response;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasResponse()
+    {
+        return null !== $this->response;
+    }
+
+    /**
+     * @return Response
+     */
+    public function getResponse()
+    {
+        return $this->response;
     }
 }

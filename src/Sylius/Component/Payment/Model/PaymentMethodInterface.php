@@ -17,8 +17,6 @@ use Sylius\Component\Resource\Model\ToggleableInterface;
 use Sylius\Component\Resource\Model\TranslatableInterface;
 
 /**
- * Payment method interface.
- *
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  */
 interface PaymentMethodInterface extends
@@ -61,20 +59,20 @@ interface PaymentMethodInterface extends
     /**
      * @return string
      */
-    public function getGateway();
-
-    /**
-     * @param string $gateway
-     */
-    public function setGateway($gateway);
-
-    /**
-     * @return string
-     */
     public function getEnvironment();
 
     /**
      * @param string $environment
      */
     public function setEnvironment($environment);
+
+    /**
+     * @return int
+     */
+    public function getPosition();
+
+    /**
+     * @param int $position
+     */
+    public function setPosition($position);
 }

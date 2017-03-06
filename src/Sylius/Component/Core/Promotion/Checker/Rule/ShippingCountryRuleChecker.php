@@ -11,6 +11,7 @@
 
 namespace Sylius\Component\Core\Promotion\Checker\Rule;
 
+use Sylius\Bundle\CoreBundle\Form\Type\Promotion\Rule\ShippingCountryConfigurationType;
 use Sylius\Component\Addressing\Model\CountryInterface;
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Promotion\Checker\Rule\RuleCheckerInterface;
@@ -21,7 +22,7 @@ use Sylius\Component\Resource\Repository\RepositoryInterface;
 /**
  * @author Saša Stamenković <umpirsky@gmail.com>
  */
-class ShippingCountryRuleChecker implements RuleCheckerInterface
+final class ShippingCountryRuleChecker implements RuleCheckerInterface
 {
     const TYPE = 'shipping_country';
 
@@ -65,6 +66,6 @@ class ShippingCountryRuleChecker implements RuleCheckerInterface
      */
     public function getConfigurationFormType()
     {
-        return 'sylius_promotion_rule_shipping_country_configuration';
+        return ShippingCountryConfigurationType::class;
     }
 }

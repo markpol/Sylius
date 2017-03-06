@@ -18,12 +18,12 @@ use Sylius\Component\Mailer\Sender\SenderInterface;
 /**
  * @author Hussein Jafferjee <hussein@jafferjee.ca>
  */
-class OrderEmailManager
+final class OrderEmailManager implements OrderEmailManagerInterface
 {
     /**
      * @var SenderInterface
      */
-    protected $emailSender;
+    private $emailSender;
 
     /**
      * @param SenderInterface $emailSender
@@ -34,7 +34,7 @@ class OrderEmailManager
     }
 
     /**
-     * @param OrderInterface $order
+     * {@inheritdoc}
      */
     public function sendConfirmationEmail(OrderInterface $order)
     {

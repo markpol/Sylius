@@ -34,21 +34,62 @@ interface UpdateConfigurableProductPageInterface extends UpdatePageInterface
      * @param string $option
      */
     public function isProductOptionChosen($option);
-    
+
     /**
      * @return bool
      */
     public function isProductOptionsDisabled();
-    
+
     /**
      * @param string $taxonName
      *
      * @return bool
      */
     public function isMainTaxonChosen($taxonName);
-    
+
     /**
      * @param TaxonInterface $taxon
      */
     public function selectMainTaxon(TaxonInterface $taxon);
+
+    /**
+     * @param string $channelName
+     */
+    public function checkChannel($channelName);
+
+    /**
+     * @param string $type
+     *
+     * @return bool
+     */
+    public function isImageWithTypeDisplayed($type);
+
+    /**
+     * @param string $path
+     * @param string $type
+     */
+    public function attachImage($path, $type = null);
+
+    /**
+     * @param string $type
+     * @param string $path
+     */
+    public function changeImageWithType($type, $path);
+
+    /**
+     * @param string $type
+     */
+    public function removeImageWithType($type);
+
+    public function removeFirstImage();
+
+    /**
+     * @param string $type
+     */
+    public function modifyFirstImageType($type);
+
+    /**
+     * @return int
+     */
+    public function countImages();
 }

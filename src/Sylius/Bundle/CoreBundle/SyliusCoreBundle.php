@@ -13,8 +13,7 @@ namespace Sylius\Bundle\CoreBundle;
 
 use Sylius\Bundle\CoreBundle\DependencyInjection\Compiler\LazyCacheWarmupPass;
 use Sylius\Bundle\CoreBundle\DependencyInjection\Compiler\RegisterTaxCalculationStrategiesPass;
-use Sylius\Bundle\CoreBundle\DependencyInjection\Compiler\RoutingRepositoryPass;
-use Sylius\Bundle\CoreBundle\DependencyInjection\Compiler\SitemapProviderPass;
+use Sylius\Bundle\CoreBundle\DependencyInjection\Compiler\TranslatableEntityLocalePass;
 use Sylius\Bundle\ResourceBundle\AbstractResourceBundle;
 use Sylius\Bundle\ResourceBundle\SyliusResourceBundle;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -24,7 +23,7 @@ use Symfony\Component\DependencyInjection\ContainerBuilder;
  * @author Gonzalo Vilaseca <gvilaseca@reiss.co.uk>
  * @author Mark McKelvie <mark.mckelvie@reiss.com>
  */
-class SyliusCoreBundle extends AbstractResourceBundle
+final class SyliusCoreBundle extends AbstractResourceBundle
 {
     /**
      * {@inheritdoc}
@@ -43,10 +42,9 @@ class SyliusCoreBundle extends AbstractResourceBundle
     {
         parent::build($container);
 
-        $container->addCompilerPass(new RoutingRepositoryPass());
         $container->addCompilerPass(new LazyCacheWarmupPass());
-        $container->addCompilerPass(new SitemapProviderPass());
         $container->addCompilerPass(new RegisterTaxCalculationStrategiesPass());
+        $container->addCompilerPass(new TranslatableEntityLocalePass());
     }
 
     /**

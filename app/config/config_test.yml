@@ -5,10 +5,7 @@ imports:
     - { resource: "config.yml" }
 
 parameters:
-    currency: USD
     locale: en_US
-
-    sylius.order.allow_guest_order: true
 
 framework:
     test: ~
@@ -18,7 +15,6 @@ framework:
 doctrine:
     dbal:
         dbname: "%database_name%_test"
-        driver_class: Sylius\Bundle\CoreBundle\Test\MySqlDriver
 
 monolog:
     handlers:
@@ -27,16 +23,6 @@ monolog:
             path: "%kernel.logs_dir%/%kernel.environment%.log"
             level: error
 
-payum:
-    gateways:
-        paypal_express_checkout:
-            factory: paypal_express_checkout
-            payum.http_client: @sylius.payum.http_client
-            username: TEST
-            password: TEST
-            signature: TEST
-            sandbox: true
-
 swiftmailer:
     disable_delivery: true
     logging: true
@@ -44,16 +30,6 @@ swiftmailer:
         type: file
         path: "%kernel.cache_dir%/spool"
 
-sylius_payment:
-    gateways:
-        cc: Credit Card
-        test: Test
-        stripe: Stripe
-        paypal_express_checkout: Paypal Express Checkout
-
 sylius_theme:
     sources:
         test: ~
-
-twig:
-    exception_controller: "Sylius\\Bundle\\CoreBundle\\Controller\\VerboseExceptionController::showAction"

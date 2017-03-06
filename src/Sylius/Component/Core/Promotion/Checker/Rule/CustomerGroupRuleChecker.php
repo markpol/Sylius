@@ -11,18 +11,20 @@
 
 namespace Sylius\Component\Core\Promotion\Checker\Rule;
 
+use Sylius\Bundle\CoreBundle\Form\Type\Promotion\Rule\CustomerGroupConfigurationType;
+use Sylius\Component\Core\Model\CustomerInterface;
 use Sylius\Component\Core\Model\OrderInterface;
 use Sylius\Component\Promotion\Checker\Rule\RuleCheckerInterface;
 use Sylius\Component\Promotion\Exception\UnsupportedTypeException;
 use Sylius\Component\Promotion\Model\PromotionSubjectInterface;
-use Sylius\Component\User\Model\GroupableInterface;
-use Sylius\Component\User\Model\GroupInterface;
 
 /**
- * @author Antonio Perić <antonio@locastic.com>
+ * @author Michał Marcinkowski <michal.marcinkowski@lakion.com>
  */
 class CustomerGroupRuleChecker implements RuleCheckerInterface
 {
+    const TYPE = 'customer_group';
+
     /**
      * {@inheritdoc}
      */
@@ -36,18 +38,15 @@ class CustomerGroupRuleChecker implements RuleCheckerInterface
             return false;
         }
 
-        if (!$customer instanceof GroupableInterface) {
+        if (!$customer instanceof CustomerInterface) {
             return false;
         }
 
-        /* @var GroupInterface $group */
-        foreach ($customer->getGroups() as $group) {
-            if ($configuration['groups'] == $group->getId()) {
-                return true;
-            }
+        if (null === $customer->getGroup()) {
+            return false;
         }
 
-        return false;
+        return $configuration['group_code'] === $customer->getGroup()->getCode();
     }
 
     /**
@@ -55,6 +54,6 @@ class CustomerGroupRuleChecker implements RuleCheckerInterface
      */
     public function getConfigurationFormType()
     {
-        return 'sylius_promotion_rule_customer_group_configuration';
+        return CustomerGroupConfigurationType::class;
     }
 }

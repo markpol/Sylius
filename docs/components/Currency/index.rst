@@ -10,5 +10,9 @@ Managing different currencies, exchange rates and converting cash amounts for PH
    basic_usage
    models
    interfaces
-   importers
    unavailable_currency_exception
+
+Learn more
+----------
+
+* :doc:`Currencies in the Sylius platform </book/configuration/currencies>` - concept documentation

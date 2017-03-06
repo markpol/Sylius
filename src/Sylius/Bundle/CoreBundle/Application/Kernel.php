@@ -12,7 +12,17 @@
 namespace Sylius\Bundle\CoreBundle\Application;
 
 use PSS\SymfonyMockerContainer\DependencyInjection\MockerContainer;
+use Symfony\Component\Config\Loader\DelegatingLoader;
 use Symfony\Component\Config\Loader\LoaderInterface;
+use Symfony\Component\Config\Loader\LoaderResolver;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\DependencyInjection\Loader\ClosureLoader;
+use Symfony\Component\DependencyInjection\Loader\DirectoryLoader;
+use Symfony\Component\DependencyInjection\Loader\IniFileLoader;
+use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
+use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
+use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
+use Symfony\Component\HttpKernel\Config\FileLocator;
 use Symfony\Component\HttpKernel\Kernel as HttpKernel;
 
 /**
@@ -21,12 +31,12 @@ use Symfony\Component\HttpKernel\Kernel as HttpKernel;
  */
 class Kernel extends HttpKernel
 {
-    const VERSION = '1.0.0-dev';
+    const VERSION = '1.0.0-beta.1';
     const VERSION_ID = '10000';
     const MAJOR_VERSION = '1';
     const MINOR_VERSION = '0';
     const RELEASE_VERSION = '0';
-    const EXTRA_VERSION = 'DEV';
+    const EXTRA_VERSION = 'beta.1';
 
     /**
      * {@inheritdoc}
@@ -34,15 +44,12 @@ class Kernel extends HttpKernel
     public function registerBundles()
     {
         $bundles = [
-            new \Sylius\Bundle\InstallerBundle\SyliusInstallerBundle(),
             new \Sylius\Bundle\OrderBundle\SyliusOrderBundle(),
             new \Sylius\Bundle\MoneyBundle\SyliusMoneyBundle(),
             new \Sylius\Bundle\CurrencyBundle\SyliusCurrencyBundle(),
             new \Sylius\Bundle\LocaleBundle\SyliusLocaleBundle(),
-            new \Sylius\Bundle\CartBundle\SyliusCartBundle(),
             new \Sylius\Bundle\ProductBundle\SyliusProductBundle(),
             new \Sylius\Bundle\ChannelBundle\SyliusChannelBundle(),
-            new \Sylius\Bundle\VariationBundle\SyliusVariationBundle(),
             new \Sylius\Bundle\AttributeBundle\SyliusAttributeBundle(),
             new \Sylius\Bundle\TaxationBundle\SyliusTaxationBundle(),
             new \Sylius\Bundle\ShippingBundle\SyliusShippingBundle(),
@@ -52,29 +59,17 @@ class Kernel extends HttpKernel
             new \Sylius\Bundle\AddressingBundle\SyliusAddressingBundle(),
             new \Sylius\Bundle\InventoryBundle\SyliusInventoryBundle(),
             new \Sylius\Bundle\TaxonomyBundle\SyliusTaxonomyBundle(),
-            new \Sylius\Bundle\PricingBundle\SyliusPricingBundle(),
-            new \Sylius\Bundle\ContentBundle\SyliusContentBundle(),
             new \Sylius\Bundle\UserBundle\SyliusUserBundle(),
             new \Sylius\Bundle\CustomerBundle\SyliusCustomerBundle(),
             new \Sylius\Bundle\UiBundle\SyliusUiBundle(),
-            new \Sylius\Bundle\AssociationBundle\SyliusAssociationBundle(),
             new \Sylius\Bundle\ReviewBundle\SyliusReviewBundle(),
             new \Sylius\Bundle\CoreBundle\SyliusCoreBundle(),
             new \Sylius\Bundle\ResourceBundle\SyliusResourceBundle(),
             new \Sylius\Bundle\GridBundle\SyliusGridBundle(),
             new \winzou\Bundle\StateMachineBundle\winzouStateMachineBundle(),
 
-            new \Sonata\BlockBundle\SonataBlockBundle(),
-            new \Symfony\Cmf\Bundle\CoreBundle\CmfCoreBundle(),
-            new \Symfony\Cmf\Bundle\BlockBundle\CmfBlockBundle(),
-            new \Symfony\Cmf\Bundle\ContentBundle\CmfContentBundle(),
-            new \Symfony\Cmf\Bundle\RoutingBundle\CmfRoutingBundle(),
-            new \Symfony\Cmf\Bundle\MenuBundle\CmfMenuBundle(),
-            new \Symfony\Cmf\Bundle\MediaBundle\CmfMediaBundle(),
-
             new \Doctrine\Bundle\DoctrineBundle\DoctrineBundle(),
             new \Doctrine\Bundle\DoctrineCacheBundle\DoctrineCacheBundle(),
-            new \Doctrine\Bundle\PHPCRBundle\DoctrinePHPCRBundle(),
             new \Symfony\Bundle\FrameworkBundle\FrameworkBundle(),
             new \Symfony\Bundle\MonologBundle\MonologBundle(),
             new \Symfony\Bundle\SecurityBundle\SecurityBundle(),
@@ -83,17 +78,13 @@ class Kernel extends HttpKernel
 
             new \Sonata\IntlBundle\SonataIntlBundle(),
             new \Bazinga\Bundle\HateoasBundle\BazingaHateoasBundle(),
-            new \FOS\OAuthServerBundle\FOSOAuthServerBundle(),
+            new \JMS\SerializerBundle\JMSSerializerBundle(),
             new \FOS\RestBundle\FOSRestBundle(),
 
-            new \FOS\ElasticaBundle\FOSElasticaBundle(),
             new \Knp\Bundle\GaufretteBundle\KnpGaufretteBundle(),
             new \Knp\Bundle\MenuBundle\KnpMenuBundle(),
-            new \Knp\Bundle\SnappyBundle\KnpSnappyBundle(),
             new \Liip\ImagineBundle\LiipImagineBundle(),
             new \Payum\Bundle\PayumBundle\PayumBundle(),
-            new \JMS\SerializerBundle\JMSSerializerBundle(),
-            new \JMS\TranslationBundle\JMSTranslationBundle(),
             new \Stof\DoctrineExtensionsBundle\StofDoctrineExtensionsBundle(),
             new \WhiteOctober\PagerfantaBundle\WhiteOctoberPagerfantaBundle(),
 
@@ -104,9 +95,10 @@ class Kernel extends HttpKernel
             new \Sylius\Bundle\ThemeBundle\SyliusThemeBundle(), // must be added after FrameworkBundle
         ];
 
-        if (in_array($this->environment, ['dev', 'test', 'test_cached'], true)) {
+        if (in_array($this->getEnvironment(), ['dev', 'test', 'test_cached'], true)) {
             $bundles[] = new \Symfony\Bundle\DebugBundle\DebugBundle();
             $bundles[] = new \Symfony\Bundle\WebProfilerBundle\WebProfilerBundle();
+            $bundles[] = new \Sensio\Bundle\DistributionBundle\SensioDistributionBundle();
         }
 
         return $bundles;
@@ -117,7 +109,7 @@ class Kernel extends HttpKernel
      */
     protected function getContainerBaseClass()
     {
-        if ('test' === $this->environment || 'test_cached' === $this->environment) {
+        if (in_array($this->getEnvironment(), ['test', 'test_cached'], true)) {
             return MockerContainer::class;
         }
 
@@ -127,13 +119,30 @@ class Kernel extends HttpKernel
     /**
      * {@inheritdoc}
      */
+    protected function getContainerLoader(ContainerInterface $container)
+    {
+        $locator = new FileLocator($this, $this->getRootDir() . '/Resources');
+        $resolver = new LoaderResolver([
+            new XmlFileLoader($container, $locator),
+            new YamlFileLoader($container, $locator),
+            new IniFileLoader($container, $locator),
+            new PhpFileLoader($container, $locator),
+            new DirectoryLoader($container, $locator),
+            new ClosureLoader($container),
+        ]);
+
+        return new DelegatingLoader($resolver);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function registerContainerConfiguration(LoaderInterface $loader)
     {
-        $rootDir = $this->getRootDir();
+        $loader->load($this->getRootDir() . '/config/config_' . $this->getEnvironment() . '.yml');
 
-        $loader->load($rootDir.'/config/config_'.$this->environment.'.yml');
-
-        if (is_file($file = $rootDir.'/config/config_'.$this->environment.'.local.yml')) {
+        $file = $this->getRootDir() . '/config/config_' . $this->getEnvironment() . '.local.yml';
+        if (is_file($file)) {
             $loader->load($file);
         }
     }
@@ -144,10 +153,10 @@ class Kernel extends HttpKernel
     public function getCacheDir()
     {
         if ($this->isVagrantEnvironment()) {
-            return '/dev/shm/sylius/cache/'.$this->environment;
+            return '/dev/shm/sylius/cache/' . $this->getEnvironment();
         }
 
-        return parent::getCacheDir();
+        return dirname($this->getRootDir()) . '/var/cache/' . $this->getEnvironment();
     }
 
     /**
@@ -159,7 +168,7 @@ class Kernel extends HttpKernel
             return '/dev/shm/sylius/logs';
         }
 
-        return parent::getLogDir();
+        return dirname($this->getRootDir()) . '/var/logs';
     }
 
     /**

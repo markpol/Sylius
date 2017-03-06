@@ -11,19 +11,16 @@
 
 namespace Sylius\Component\Inventory\Model;
 
+use Sylius\Component\Resource\Model\ResourceInterface;
+
 /**
  * @author Paweł Jędrzejewski <pawel@sylius.org>
  * @author Grzegorz Sadowski <grzegorz.sadowski@lakion.com>
  */
-interface InventoryUnitInterface
+interface InventoryUnitInterface extends ResourceInterface
 {
     /**
      * @return StockableInterface
      */
     public function getStockable();
-
-    /**
-     * @return string
-     */
-    public function getInventoryName();
 }

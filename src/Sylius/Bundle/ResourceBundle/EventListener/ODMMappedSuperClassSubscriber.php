@@ -21,7 +21,7 @@ use Doctrine\ODM\MongoDB\Mapping\ClassMetadataInfo;
  *
  * @author Ivannis Suárez Jérez <ivannis.suarez@gmail.com>
  */
-class ODMMappedSuperClassSubscriber extends AbstractDoctrineSubscriber
+final class ODMMappedSuperClassSubscriber extends AbstractDoctrineSubscriber
 {
     /**
      * @return array
@@ -97,12 +97,11 @@ class ODMMappedSuperClassSubscriber extends AbstractDoctrineSubscriber
 
             if ($parentMetadata->isMappedSuperclass) {
                 foreach ($parentMetadata->associationMappings as $key => $value) {
-                    if ($this->hasRelation($value['association'])) {
+                    if ($this->isRelation($value['association']) && !isset($metadata->associationMappings[$key])) {
                         $metadata->associationMappings[$key] = $value;
                     }
                 }
             }
-
         }
     }
 
@@ -116,18 +115,18 @@ class ODMMappedSuperClassSubscriber extends AbstractDoctrineSubscriber
         }
 
         foreach ($metadata->associationMappings as $key => $value) {
-            if ($this->hasRelation($value['association'])) {
+            if ($this->isRelation($value['association'])) {
                 unset($metadata->associationMappings[$key]);
             }
         }
     }
 
     /**
-     * @param $type
+     * @param string $type
      *
      * @return bool
      */
-    private function hasRelation($type)
+    private function isRelation($type)
     {
         return in_array(
             $type,

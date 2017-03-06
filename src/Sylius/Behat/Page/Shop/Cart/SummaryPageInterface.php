@@ -28,6 +28,11 @@ interface SummaryPageInterface extends PageInterface
     /**
      * @return string
      */
+    public function getBaseGrandTotal();
+
+    /**
+     * @return string
+     */
     public function getTaxTotal();
 
     /**
@@ -151,4 +156,9 @@ interface SummaryPageInterface extends PageInterface
      * @param int $timeout
      */
     public function waitForRedirect($timeout);
+
+    /**
+     * @return string
+     */
+    public function getPromotionCouponValidationMessage();
 }

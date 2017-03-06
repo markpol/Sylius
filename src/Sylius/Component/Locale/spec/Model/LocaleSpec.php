@@ -12,13 +12,11 @@
 namespace spec\Sylius\Component\Locale\Model;
 
 use PhpSpec\ObjectBehavior;
+use Sylius\Component\Locale\Model\Locale;
 use Sylius\Component\Locale\Model\LocaleInterface;
 use Sylius\Component\Resource\Model\TimestampableInterface;
-use Sylius\Component\Resource\Model\ToggleableInterface;
 
 /**
- * @mixin \Sylius\Component\Locale\Model\Locale
- *
  * @author Kamil Kokot <kamil.kokot@lakion.com>
  */
 final class LocaleSpec extends ObjectBehavior
@@ -30,17 +28,12 @@ final class LocaleSpec extends ObjectBehavior
 
     function it_is_initializable()
     {
-        $this->shouldHaveType('Sylius\Component\Locale\Model\Locale');
+        $this->shouldHaveType(Locale::class);
     }
 
-    function it_implements_Sylius_locale_interface()
+    function it_implements_a_locale_interface()
     {
         $this->shouldImplement(LocaleInterface::class);
-    }
-
-    function it_is_toggleable()
-    {
-        $this->shouldImplement(ToggleableInterface::class);
     }
 
     function it_is_timestampable()
@@ -82,38 +75,6 @@ final class LocaleSpec extends ObjectBehavior
 
         $this->setCode('pl');
         $this->__toString()->shouldReturn('Polish');
-    }
-
-    function it_is_enabled_by_default()
-    {
-        $this->isEnabled()->shouldReturn(true);
-    }
-
-    function it_can_be_disabled()
-    {
-        $this->disable();
-        $this->isEnabled()->shouldReturn(false);
-    }
-
-    function it_can_be_enabled()
-    {
-        $this->disable();
-        $this->isEnabled()->shouldReturn(false);
-
-        $this->enable();
-        $this->isEnabled()->shouldReturn(true);
-    }
-
-    function it_can_set_enabled_value()
-    {
-        $this->setEnabled(false);
-        $this->isEnabled()->shouldReturn(false);
-
-        $this->setEnabled(true);
-        $this->isEnabled()->shouldReturn(true);
-
-        $this->setEnabled(false);
-        $this->isEnabled()->shouldReturn(false);
     }
 
     function it_initializes_creation_date_by_default()
